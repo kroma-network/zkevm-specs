@@ -158,6 +158,7 @@ class TxContextFieldTag(IntEnum):
     CallDataGasCost = auto()
     TxSignHash = auto()
     CallData = auto()
+    RollupDataGasCost = auto()
 
 
 class BytecodeFieldTag(IntEnum):

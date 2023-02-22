@@ -83,7 +83,7 @@ def begin_tx(instruction: Instruction):
             instruction.constrain_equal(reversion_info.is_persistent, FQ(1))
 
             # Do step state transition
-            instruction.constrain_equal(instruction.next.execution_state, ExecutionState.EndTx)
+            instruction.constrain_equal(instruction.next.execution_state, ExecutionState.BaseFeeHook)
             instruction.constrain_step_state_transition(
                 rw_counter=Transition.delta(10), call_id=Transition.to(call_id)
             )

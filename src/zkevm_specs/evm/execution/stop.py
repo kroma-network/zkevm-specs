@@ -1,7 +1,7 @@
-from ...util import FQ
-from ..instruction import Instruction, Transition
-from ..table import CallContextFieldTag
 from ..execution_state import ExecutionState
+from ..instruction import Instruction, Transition
+from ..table import CallContextFieldTag, TxContextFieldTag
+from ...util import DEPOSIT_TX_TYPE, FQ 
 
 
 def stop(instruction: Instruction):
@@ -18,14 +18,26 @@ def stop(instruction: Instruction):
     is_success = instruction.call_context_lookup(CallContextFieldTag.IsSuccess)
     instruction.constrain_equal(is_success, FQ(1))
 
-    # Go to EndTx only when is_root
-    is_to_end_tx = instruction.is_equal(instruction.next.execution_state, ExecutionState.EndTx)
-    instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_end_tx)
-
     if instruction.curr.is_root:
+        tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId)
+        tx_type = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Type)
+        is_deposit = instruction.is_equal(tx_type, FQ(DEPOSIT_TX_TYPE))
+        
+        if is_deposit == FQ(1):
+            # Go to EndDepositTx only, when is_root && if tx is a deposit tx
+            is_to_end_deposit_tx = instruction.is_equal(instruction.next.execution_state, ExecutionState.EndDepositTx)
+            instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_end_deposit_tx)
+        else:
+            # Go to BaseFeeHook only, when is_root && if tx is not a deposit tx
+            is_to_base_fee_hook = instruction.is_equal(instruction.next.execution_state, ExecutionState.BaseFeeHook)
+            instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_base_fee_hook)
+        
+        is_persistent = instruction.call_context_lookup(CallContextFieldTag.IsPersistent)
+        instruction.constrain_equal(is_persistent, FQ(1))
+        
         # Do step state transition
         instruction.constrain_step_state_transition(
-            rw_counter=Transition.delta(1),
+            rw_counter=Transition.delta(3),
             call_id=Transition.same(),
         )
     else:

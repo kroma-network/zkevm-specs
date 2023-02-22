@@ -132,6 +132,7 @@ class Transaction:
     callee_address: Optional[U160]
     value: U256
     call_data: bytes
+    rollup_data_gas_cost: U64
 
     def __init__(
         self,
@@ -144,6 +145,7 @@ class Transaction:
         callee_address: Optional[U160] = None,
         value: U256 = U256(0),
         call_data: bytes = bytes(),
+        rollup_data_gas_cost: U64 = U64(0),
     ) -> None:
         self.id = id
         self.type_ = type_
@@ -154,6 +156,7 @@ class Transaction:
         self.callee_address = callee_address
         self.value = value
         self.call_data = call_data
+        self.rollup_data_gas_cost = rollup_data_gas_cost
 
     @classmethod
     def padding(obj, id: int):
@@ -230,6 +233,12 @@ class Transaction:
                 FQ(TxContextFieldTag.TxSignHash),
                 FQ(0),
                 FQ(1234),  # Mock value for TxSignHash
+            ),
+            TxTableRow(
+                FQ(self.id),
+                FQ(TxContextFieldTag.RollupDataGasCost),
+                FQ(0),
+                FQ(self.rollup_data_gas_cost),
             ),
         ]
 
@@ -497,7 +506,7 @@ class RWDictionary:
     def l1_block_write(
         self,
         field_tag: L1BlockFieldTag,
-        value: Union[int, FQ],
+        value: Union[int, FQ, RLC],
     ) -> RWDictionary:
         if isinstance(value, int):
             value = FQ(value)
@@ -508,6 +517,19 @@ class RWDictionary:
             value=value,
         )
     
+    def l1_block_read(
+        self,
+        field_tag: L1BlockFieldTag,
+        value: Union[int, FQ, RLC],
+    ) -> RWDictionary:
+        if isinstance(value, int):
+            value = FQ(value)
+        return self._append(
+            RW.Read,
+            RWTableTag.L1Block,
+            key3=FQ(field_tag),
+            value=value,
+        )
 
     def tx_refund_write(
         self,
