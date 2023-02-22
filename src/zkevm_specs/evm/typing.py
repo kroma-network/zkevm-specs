@@ -24,6 +24,7 @@ from ..util import (
     RLC,
     Expression,
     keccak256,
+    DEPOSIT_TX_TYPE,
     GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE,
     GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE,
     EMPTY_CODE_HASH,
@@ -46,6 +47,7 @@ from .table import (
     CopyCircuitRow,
     KeccakTableRow,
     ExpCircuitRow,
+    L1BlockFieldTag
 )
 from .opcode import get_push_size, Opcode
 
@@ -122,6 +124,7 @@ class Block:
 
 class Transaction:
     id: int
+    type_: U64
     nonce: U64
     gas: U64
     gas_price: U256
@@ -133,6 +136,7 @@ class Transaction:
     def __init__(
         self,
         id: int = 1,
+        type_: U64 = U64(0),
         nonce: U64 = U64(0),
         gas: U64 = U64(21000),
         gas_price: U256 = U256(int(2e9)),
@@ -142,6 +146,7 @@ class Transaction:
         call_data: bytes = bytes(),
     ) -> None:
         self.id = id
+        self.type_ = type_
         self.nonce = nonce
         self.gas = gas
         self.gas_price = gas_price
@@ -152,7 +157,12 @@ class Transaction:
 
     @classmethod
     def padding(obj, id: int):
-        tx = obj(id, U64(0), U64(0), U256(0), U160(0), U160(0), U256(0), bytes())
+        tx = obj(id, U64(0), U64(0), U64(0),U256(0), U160(0), U160(0), U256(0), bytes())
+        return tx
+    
+    @classmethod
+    def system_deposit(obj, call_data: bytes = bytes()):
+        tx = obj(1, DEPOSIT_TX_TYPE, U64(0), U64(150000000), U256(0), U160(0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001), U160(0x4200000000000000000000000000000000000015), U256(0), call_data)
         return tx
 
     def call_data_gas_cost(self) -> int:
@@ -171,6 +181,12 @@ class Transaction:
 
     def table_fixed(self, randomness: FQ) -> List[TxTableRow]:
         return [
+            TxTableRow(
+                FQ(self.id),
+                FQ(TxContextFieldTag.Type),
+                FQ(0),
+                FQ(self.type_),
+            ),
             TxTableRow(FQ(self.id), FQ(TxContextFieldTag.Nonce), FQ(0), FQ(self.nonce)),
             TxTableRow(FQ(self.id), FQ(TxContextFieldTag.Gas), FQ(0), FQ(self.gas)),
             TxTableRow(
@@ -477,6 +493,21 @@ class RWDictionary:
         return self._append(
             RW.Read, RWTableTag.TxRefund, key1=FQ(tx_id), value=FQ(refund), value_prev=FQ(refund)
         )
+    
+    def l1_block_write(
+        self,
+        field_tag: L1BlockFieldTag,
+        value: Union[int, FQ],
+    ) -> RWDictionary:
+        if isinstance(value, int):
+            value = FQ(value)
+        return self._append(
+            RW.Write,
+            RWTableTag.L1Block,
+            key3=FQ(field_tag),
+            value=value,
+        )
+    
 
     def tx_refund_write(
         self,

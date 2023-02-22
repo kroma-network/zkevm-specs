@@ -89,6 +89,7 @@ def rand_block() -> Block:
 
 def rand_tx(calldata_len: int) -> Transaction:
     return Transaction(
+        type_=rand_u64(),
         nonce=rand_u64(),
         gas_price=rand_u256(),
         gas=rand_u64(),

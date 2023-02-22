@@ -322,6 +322,7 @@ class Block:
 
 @dataclass
 class Transaction:
+    type_: U64
     nonce: U64
     gas_price: U256
     gas: U64
@@ -333,11 +334,12 @@ class Transaction:
 
     @classmethod
     def default(cls):
-        return Transaction(U64(0), U256(0), U64(0), U160(0), U160(0), U256(0), bytes([]), U256(0))
+        return Transaction(U64(0), U64(0), U256(0), U64(0), U160(0), U160(0), U256(0), bytes([]), U256(0))
 
     def tx_table_value_column(self) -> List[FQ]:
         """Return the tx table value column corresponding to this tx.  Contains fields and no calldata"""
         column = []
+        column.append(FQ(self.type_)) # Type
         column.append(FQ(self.nonce))  # Nonce
         column.append(FQ(self.gas))  # Gas
         column.append(FQ(self.gas_price))  # GasPrice
