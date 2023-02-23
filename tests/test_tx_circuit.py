@@ -4,7 +4,7 @@ from eth_keys import keys
 from eth_utils import keccak
 import rlp
 from zkevm_specs.tx import *
-from zkevm_specs.util import rand_fq, FQ, RLC, U64
+from zkevm_specs.util import rand_fq, FQ, U64
 
 randomness = rand_fq()
 r = randomness
@@ -23,7 +23,7 @@ def sign_tx(sk: keys.PrivateKey, tx: Transaction, chain_id: U64) -> Transaction:
     sig_r = sig.r
     sig_s = sig.s
     return Transaction(
-        tx.nonce, tx.gas_price, tx.gas, tx.to, tx.value, tx.data, sig_v, sig_r, sig_s
+        tx.type_, tx.nonce, tx.gas_price, tx.gas, tx.to, tx.value, tx.data, sig_v, sig_r, sig_s
     )
 
 
@@ -85,6 +85,7 @@ def test_tx2witness():
 
     chain_id = 23
 
+    type_ = 0
     nonce = 543
     gas_price = 1234
     gas = 987654
@@ -92,7 +93,7 @@ def test_tx2witness():
     value = 0x1029384756
     data = bytes([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99])
 
-    tx = Transaction(nonce, gas_price, gas, to, value, data, 0, 0, 0)
+    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0)
     tx = sign_tx(sk, tx, chain_id)
     keccak_table = KeccakTable()
     rows, sign_verification = tx2witness(0, tx, chain_id, r, keccak_table)
@@ -102,13 +103,14 @@ def test_tx2witness():
 
 
 def gen_tx(i: int, sk: keys.PrivateKey, to: int, chain_id) -> Transaction:
+    type_ = 0
     nonce = 300 + i
     gas_price = 1000 + i * 2
     gas = 20000 + i * 3
     value = 0x30000 + i * 4
     data = bytes([i] * i)
 
-    tx = Transaction(nonce, gas_price, gas, to, value, data, 0, 0, 0)
+    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0)
     tx = sign_tx(sk, tx, chain_id)
     return tx
 

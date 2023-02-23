@@ -146,6 +146,7 @@ class TxContextFieldTag(IntEnum):
     of EIP1559 is deferred to future work.
     """
 
+    Type = auto()
     Nonce = auto()
     Gas = auto()
     GasPrice = auto()
@@ -195,6 +196,7 @@ class RWTableTag(IntEnum):
     Memory = auto()
     TxLog = auto()
     TxReceipt = auto()
+    L1Block = auto()
 
     # For state writes which affect future execution before reversion, we need
     # to write them with reversion when the write might fail.
@@ -281,6 +283,12 @@ class TxLogFieldTag(IntEnum):
     DataLength = auto()  # how many bytes read from memory, For RLP encoding
 
 
+class L1BlockFieldTag(IntEnum):
+    L1BaseFee = auto()
+    L1FeeOverhead = auto()
+    L1FeeScalar = auto()
+
+    
 class TxReceiptFieldTag(IntEnum):
     """
     Tag for RWTable lookup with tag TxReceipt, which is used to index specific

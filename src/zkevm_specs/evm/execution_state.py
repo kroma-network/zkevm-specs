@@ -18,6 +18,7 @@ class ExecutionState(IntEnum):
 
     BeginTx = auto()
     EndTx = auto()
+    EndDepositTx = auto()
     EndBlock = auto()
 
     # Opcode's successful cases

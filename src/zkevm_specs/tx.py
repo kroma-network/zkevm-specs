@@ -7,6 +7,7 @@ from .util import (
     U256,
     U64,
     linear_combine_bytes,
+    DEPOSIT_TX_TYPE,
     GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE,
     GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE,
 )
@@ -290,7 +291,7 @@ class Transaction(NamedTuple):
     """
     Ethereum Transaction
     """
-
+    type_: U64
     nonce: U64
     gas_price: U256
     gas: U64
@@ -309,6 +310,7 @@ class Transaction(NamedTuple):
 
 def padding_tx(tx_id: int) -> List[Row]:
     return [
+        Row(FQ(tx_id), FQ(Tag.Type), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.Nonce), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.Gas), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.GasPrice), FQ(0), FQ(0)),
@@ -360,6 +362,7 @@ def tx2witness(
 
     tx_id = FQ(index + 1)
     rows: List[Row] = []
+    rows.append(Row(tx_id, FQ(Tag.Type), FQ(0), FQ(tx.type_)))
     rows.append(Row(tx_id, FQ(Tag.Nonce), FQ(0), FQ(tx.nonce)))
     rows.append(Row(tx_id, FQ(Tag.Gas), FQ(0), FQ(tx.gas)))
     rows.append(Row(tx_id, FQ(Tag.GasPrice), FQ(0), RLC(tx.gas_price, randomness).expr()))

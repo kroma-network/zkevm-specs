@@ -26,6 +26,7 @@ from .table import (
     BytecodeFieldTag,
     CallContextFieldTag,
     FixedTableRow,
+    L1BlockFieldTag,
     RWTableRow,
     Tables,
     FixedTableTag,
@@ -153,18 +154,18 @@ class Instruction:
         curr, next = self.curr.execution_state, self.next.execution_state
 
         # ExecutionState transition constraint for special ones
-        if curr == ExecutionState.EndTx:
+        if curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx]:
             assert next in [ExecutionState.BeginTx, ExecutionState.EndBlock]
         elif curr == ExecutionState.EndBlock:
             assert next == ExecutionState.EndBlock
 
         # Negation ExecutionState transition constraint for rest ones
         if next == ExecutionState.BeginTx:
-            assert curr == ExecutionState.EndTx
-        elif next == ExecutionState.EndTx:
+            assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx]
+        elif next in [ExecutionState.EndTx, ExecutionState.EndDepositTx]:
             assert curr.halts() or curr == ExecutionState.BeginTx
         elif next == ExecutionState.EndBlock:
-            assert curr in [ExecutionState.EndTx, ExecutionState.EndBlock]
+            assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx, ExecutionState.EndBlock]
 
     def constrain_step_state_transition(self, **kwargs: Transition):
         keys = set(
@@ -668,6 +669,17 @@ class Instruction:
             key2=FQ(0),
             key3=FQ(field_tag),
             key4=FQ(0),
+        ).value
+        return value
+    
+    def l1_block_write(
+        self,
+        field_tag: L1BlockFieldTag,
+    ) -> Expression:
+        value = self.rw_lookup(
+            RW.Write,
+            RWTableTag.L1Block,
+            key3=FQ(field_tag),
         ).value
         return value
 
