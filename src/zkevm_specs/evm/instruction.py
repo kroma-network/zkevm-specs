@@ -158,14 +158,22 @@ class Instruction:
             assert next in [ExecutionState.BeginTx, ExecutionState.EndBlock]
         elif curr == ExecutionState.EndBlock:
             assert next == ExecutionState.EndBlock
+        elif curr == ExecutionState.BaseFeeHook:
+            assert next == ExecutionState.RollupFeeHook
+        elif curr == ExecutionState.RollupFeeHook:
+            assert next == ExecutionState.EndTx
 
         # Negation ExecutionState transition constraint for rest ones
         if next == ExecutionState.BeginTx:
             assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx]
-        elif next in [ExecutionState.EndTx, ExecutionState.EndDepositTx]:
+        elif next == ExecutionState.EndTx:
+            assert curr.halts() or curr == ExecutionState.RollupFeeHook
+        elif next == ExecutionState.EndDepositTx:
             assert curr.halts() or curr == ExecutionState.BeginTx
         elif next == ExecutionState.EndBlock:
             assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx, ExecutionState.EndBlock]
+        elif next == ExecutionState.BaseFeeHook:
+            assert curr.halts() or curr == ExecutionState.BeginTx
 
     def constrain_step_state_transition(self, **kwargs: Transition):
         keys = set(
@@ -678,6 +686,17 @@ class Instruction:
     ) -> Expression:
         value = self.rw_lookup(
             RW.Write,
+            RWTableTag.L1Block,
+            key3=FQ(field_tag),
+        ).value
+        return value
+    
+    def l1_block_read(
+        self,
+        field_tag: L1BlockFieldTag,
+    ) -> Expression:
+        value = self.rw_lookup(
+            RW.Read,
             RWTableTag.L1Block,
             key3=FQ(field_tag),
         ).value

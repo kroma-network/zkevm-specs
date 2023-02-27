@@ -16,10 +16,12 @@ class ExecutionState(IntEnum):
     All possible execution results an EVM step could encounter.
     """
 
+    BaseFeeHook = auto()
     BeginTx = auto()
-    EndTx = auto()
-    EndDepositTx = auto()
     EndBlock = auto()
+    EndDepositTx = auto()
+    EndTx = auto()
+    RollupFeeHook = auto()
 
     # Opcode's successful cases
     STOP = auto()

@@ -1,23 +1,28 @@
 import pytest
 
 from zkevm_specs.evm import (
-    ExecutionState,
-    StepState,
-    verify_steps,
-    Tables,
-    CallContextFieldTag,
-    TxReceiptFieldTag,
     Block,
-    Transaction,
-    RWDictionary,
+    CallContextFieldTag,
+    ExecutionState,
     L1BlockFieldTag, 
+    RWDictionary,
+    StepState,
+    Tables,
+    Transaction,
+    TxReceiptFieldTag,
+    verify_steps,
 )
-from zkevm_specs.util import rand_fq, RLC, DEPOSIT_TX_TYPE, EMPTY_CODE_HASH
+from zkevm_specs.util import (
+    DEPOSIT_TX_TYPE, 
+    EMPTY_CODE_HASH, 
+    L1_BASE_FEE, 
+    L1_FEE_OVERHEAD, 
+    L1_FEE_SCALAR, 
+    rand_fq, 
+    RLC
+)
 
 CALLEE_ADDRESS = 0xFF
-L1_BASE_FEE = 22492375312
-L1_FEE_OVERHEAD = 2100
-L1_FEE_SCALAR = 1000000
 
 TESTING_DATA = (
     # System deposit tx
@@ -123,9 +128,9 @@ def test_end_deposit_tx(
     
     if is_first_tx:
         l1_base_fee, l1_fee_overhead, l1_fee_scalar = l1_fee_data
-        rw_dictionary.l1_block_write(L1BlockFieldTag.L1BaseFee, l1_base_fee)
-        rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeOverhead, l1_fee_overhead)
-        rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeScalar, l1_fee_scalar)
+        rw_dictionary.l1_block_write(L1BlockFieldTag.L1BaseFee, RLC(l1_base_fee, randomness, 32))
+        rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeOverhead, RLC(l1_fee_overhead, randomness, 32))
+        rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeScalar, RLC(l1_fee_scalar, randomness, 32))
     # rw count so far : 19 + (1-is_first_tx) + 3*is_first_tx = 20 + 2*is_first_tx
 
     if not is_last_tx:
