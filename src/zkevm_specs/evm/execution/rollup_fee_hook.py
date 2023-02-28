@@ -4,7 +4,7 @@ from ..table import (
     L1BlockFieldTag,
     TxContextFieldTag, 
 )
-from ...util import BASE_FEE_RECIPIENT, FQ, L1_COST_DENOMINATOR
+from ...util import FQ, L1_COST_DENOMINATOR, L1_FEE_RECIPIENT
 
 def rollup_fee_hook(instruction: Instruction):
     tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId) 
@@ -35,5 +35,5 @@ def rollup_fee_hook(instruction: Instruction):
     overflow = instruction.mul_add_words(l1_fee_rlc, l1_cost_denominator_rlc, l1_cost_remainder_rlc, l1_fee_tmp2)
     instruction.constrain_equal(overflow, FQ(0))
     
-    instruction.add_balance(FQ(BASE_FEE_RECIPIENT), [l1_fee_rlc])
+    instruction.add_balance(FQ(L1_FEE_RECIPIENT), [l1_fee_rlc])
     instruction.constrain_step_state_transition(rw_counter=Transition.delta(5))

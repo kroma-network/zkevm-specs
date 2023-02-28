@@ -13,11 +13,11 @@ from zkevm_specs.evm import (
     verify_steps,
 )
 from zkevm_specs.util import (
-    BASE_FEE_RECIPIENT,
     EMPTY_CODE_HASH,
     L1_BASE_FEE,
     L1_COST_DENOMINATOR,
     L1_FEE_OVERHEAD,
+    L1_FEE_RECIPIENT,
     L1_FEE_SCALAR,
     rand_fq, 
     RLC, 
@@ -84,7 +84,7 @@ def test_rollup_fee_hook(
             .l1_block_read(L1BlockFieldTag.L1BaseFee, RLC(L1_BASE_FEE, randomness, 32))
             .l1_block_read(L1BlockFieldTag.L1FeeOverhead, RLC(L1_FEE_OVERHEAD, randomness, 32))
             .l1_block_read(L1BlockFieldTag.L1FeeScalar, RLC(L1_FEE_SCALAR, randomness, 32))
-            .account_write(BASE_FEE_RECIPIENT, AccountFieldTag.Balance, fee, zero_rlc)
+            .account_write(L1_FEE_RECIPIENT, AccountFieldTag.Balance, fee, zero_rlc)
         # fmt: on
     )
     
