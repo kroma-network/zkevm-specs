@@ -1,8 +1,13 @@
 import pytest
-from collections import namedtuple
-from itertools import chain
 
-from zkevm_specs.evm import (
+from itertools import chain
+from common import CallContext, rand_fq
+from zkevm_specs.evm_circuit import (
+    ExecutionState,
+    StepState,
+    verify_steps,
+    Tables,
+    CallContextFieldTag,
     Block,
     Bytecode,
     CallContextFieldTag,
@@ -14,8 +19,7 @@ from zkevm_specs.evm import (
     verify_steps,
 )
 from zkevm_specs.util import (
-    DEPOSIT_TX_TYPE, 
-    rand_fq,
+    DEPOSIT_TX_TYPE,
     RLC
 )
 
@@ -25,20 +29,20 @@ BYTECODE_END_WITH_STOP = Bytecode().push(0, n_bytes=1).stop()
 TESTING_DATA_IS_ROOT = (
     (Transaction(), False, BYTECODE_END_WITHOUT_STOP, True),
     (Transaction(), False, BYTECODE_END_WITH_STOP, True),
-    
+
     (Transaction(type_=DEPOSIT_TX_TYPE), False, BYTECODE_END_WITHOUT_STOP, True),
     (Transaction(type_=DEPOSIT_TX_TYPE), False, BYTECODE_END_WITH_STOP, True),
-    
+
     (Transaction(), True, BYTECODE_END_WITHOUT_STOP, False),
     (Transaction(), True, BYTECODE_END_WITH_STOP, False),
     (Transaction(type_=DEPOSIT_TX_TYPE), True, BYTECODE_END_WITHOUT_STOP, False),
-    (Transaction(type_=DEPOSIT_TX_TYPE), True, BYTECODE_END_WITH_STOP, False), 
+    (Transaction(type_=DEPOSIT_TX_TYPE), True, BYTECODE_END_WITH_STOP, False),
 )
 
 
 @pytest.mark.parametrize("tx, wrong_step, bytecode, success", TESTING_DATA_IS_ROOT)
 def test_stop_is_root(
-    tx: Transaction, 
+    tx: Transaction,
     wrong_step: bool,
     bytecode: Bytecode,
     success: bool
@@ -48,11 +52,11 @@ def test_stop_is_root(
     block = Block()
 
     bytecode_hash = RLC(bytecode.hash(), randomness)
-    
+
     rw_dictionary = (
         # fmt: off
         RWDictionary(24)
-            .call_context_read(1, CallContextFieldTag.IsSuccess, 1) 
+            .call_context_read(1, CallContextFieldTag.IsSuccess, 1)
             .call_context_read(1, CallContextFieldTag.TxId, tx.id)
             .call_context_read(1, CallContextFieldTag.IsPersistent, 1)
         # fmt: on
@@ -69,7 +73,7 @@ def test_stop_is_root(
         bytecode_table=set(bytecode.table_assignments(randomness)),
         rw_table=set(rw_dictionary.rws),
     )
-    
+
     if wrong_step:
         next_step = StepState(
             execution_state=ExecutionState.EndTx,
@@ -111,20 +115,6 @@ def test_stop_is_root(
     )
 
 
-CallContext = namedtuple(
-    "CallContext",
-    [
-        "is_root",
-        "is_create",
-        "program_counter",
-        "stack_pointer",
-        "gas_left",
-        "memory_size",
-        "reversible_write_counter",
-    ],
-    defaults=[True, False, 232, 1023, 0, 0, 0],
-)
-
 TESTING_DATA_NOT_ROOT = (
     (CallContext(), BYTECODE_END_WITHOUT_STOP),
     (CallContext(), BYTECODE_END_WITH_STOP),
@@ -161,7 +151,7 @@ def test_stop_not_root(caller_ctx: CallContext, callee_bytecode: Bytecode):
             .call_context_read(1, CallContextFieldTag.ProgramCounter, caller_ctx.program_counter)
             .call_context_read(1, CallContextFieldTag.StackPointer, caller_ctx.stack_pointer)
             .call_context_read(1, CallContextFieldTag.GasLeft, caller_ctx.gas_left)
-            .call_context_read(1, CallContextFieldTag.MemorySize, caller_ctx.memory_size)
+            .call_context_read(1, CallContextFieldTag.MemorySize, caller_ctx.memory_word_size)
             .call_context_read(1, CallContextFieldTag.ReversibleWriteCounter, caller_ctx.reversible_write_counter)
             .call_context_write(1, CallContextFieldTag.LastCalleeId, 24)
             .call_context_write(1, CallContextFieldTag.LastCalleeReturnDataOffset, 0)
@@ -197,7 +187,7 @@ def test_stop_not_root(caller_ctx: CallContext, callee_bytecode: Bytecode):
                 program_counter=caller_ctx.program_counter,
                 stack_pointer=caller_ctx.stack_pointer,
                 gas_left=caller_ctx.gas_left + callee_gas_left,
-                memory_size=caller_ctx.memory_size,
+                memory_word_size=caller_ctx.memory_word_size,
                 reversible_write_counter=caller_ctx.reversible_write_counter
                 + callee_reversible_write_counter,
             ),

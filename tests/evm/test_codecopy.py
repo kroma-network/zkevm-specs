@@ -1,34 +1,25 @@
-from itertools import chain
 import pytest
-from typing import Mapping, Sequence, Tuple
 
-from zkevm_specs.evm import (
-    AccountFieldTag,
+from zkevm_specs.evm_circuit import (
     Bytecode,
-    CallContextFieldTag,
     ExecutionState,
     Opcode,
-    RW,
-    RWDictionary,
-    RWTableTag,
     StepState,
     Tables,
     verify_steps,
     CopyCircuit,
     CopyDataTypeTag,
+    RWDictionary,
 )
 from zkevm_specs.copy_circuit import verify_copy_table
 from zkevm_specs.util import (
     GAS_COST_COPY,
-    FQ,
-    MAX_N_BYTES_COPY_CODE_TO_MEMORY,
     MEMORY_EXPANSION_LINEAR_COEFF,
     MEMORY_EXPANSION_QUAD_DENOMINATOR,
     RLC,
     U64,
-    rand_address,
-    rand_fq,
 )
+from common import rand_fq
 
 
 CALL_ID = 1
@@ -162,7 +153,7 @@ def test_codecopy(src_addr: U64, dst_addr: U64, length: U64):
             code_hash=code_hash,
             program_counter=100,
             stack_pointer=1024,
-            memory_size=next_memory_word_size,
+            memory_word_size=next_memory_word_size,
             gas_left=0,
         )
     )

@@ -1,3 +1,6 @@
+# Maximum integer value of u64
+MAX_U64 = 2**64 - 1
+
 # Maximun number of bytes with composition value that doesn't wrap around the field
 MAX_N_BYTES = 31
 # Number of bytes of account address
@@ -72,6 +75,11 @@ GAS_COST_CALL_WITH_VALUE = 9000
 GAS_COST_NEW_ACCOUNT = 25000
 # Gas stipend given if call with non-zero value
 GAS_STIPEND_CALL_WITH_VALUE = 2300
+# Gas cost of warming up an account with the access list
+GAS_COST_ACCESS_LIST_ADDRESS = 2400
+# Gas cost of warming up a storage with the access list
+GAS_COST_ACCESS_LIST_STORAGE = 1900
+
 
 # Quotient for max refund of gas used
 MAX_REFUND_QUOTIENT_OF_GAS_USED = 5
@@ -111,3 +119,32 @@ L1_COST_DENOMINATOR = 1000000
 L1_BASE_FEE = 22492375312
 L1_FEE_OVERHEAD = 2100
 L1_FEE_SCALAR = 1000000
+
+# Precompiled contract gas prices
+
+# Elliptic curve sender recovery gas price
+EcrecoverGas = 3000
+# Base price for a SHA256 operation
+Sha256BaseGas = 60
+# Per-word price for a SHA256 operation
+Sha256PerWordGas = 12
+# Base price for a RIPEMD160 operation
+Ripemd160BaseGas = 600
+# Per-word price for a RIPEMD160 operation
+Ripemd160PerWordGas = 120
+# Base price for a data copy operation
+IdentityBaseGas = 15
+# Per-work price for a data copy operation
+IdentityPerWordGas = 3
+
+# Gas needed for an elliptic curve addition
+Bn256AddGas = 150
+# Gas needed for an elliptic curve scalar multiplication
+Bn256ScalarMulGas = 6000
+# Base price for an elliptic curve pairing check
+Bn256PairingBaseGas = 45000
+# Per-point price for an elliptic curve pairing check
+Bn256PairingPerPointGas = 34000
+
+BigModExpBaseGas = 0
+Blake2fBaseGas = 0

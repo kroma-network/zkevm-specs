@@ -1,10 +1,11 @@
 import pytest
 
-from zkevm_specs.evm import (
+from common import rand_fq
+from zkevm_specs.evm_circuit import (
     Block,
     CallContextFieldTag,
     ExecutionState,
-    L1BlockFieldTag, 
+    L1BlockFieldTag,
     RWDictionary,
     StepState,
     Tables,
@@ -13,12 +14,11 @@ from zkevm_specs.evm import (
     verify_steps,
 )
 from zkevm_specs.util import (
-    DEPOSIT_TX_TYPE, 
-    EMPTY_CODE_HASH, 
-    L1_BASE_FEE, 
-    L1_FEE_OVERHEAD, 
-    L1_FEE_SCALAR, 
-    rand_fq, 
+    DEPOSIT_TX_TYPE,
+    EMPTY_CODE_HASH,
+    L1_BASE_FEE,
+    L1_FEE_OVERHEAD,
+    L1_FEE_SCALAR,
     RLC
 )
 
@@ -119,13 +119,13 @@ def test_end_deposit_tx(
         rw_dictionary.tx_receipt_read(
             tx.id - 1, TxReceiptFieldTag.CumulativeGasUsed, current_cumulative_gas_used
         )
-        
+
     rw_dictionary.tx_receipt_write(
         tx.id,
         TxReceiptFieldTag.CumulativeGasUsed,
         gas_used + current_cumulative_gas_used,
     )
-    
+
     if is_first_tx:
         l1_base_fee, l1_fee_overhead, l1_fee_scalar = l1_fee_data
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1BaseFee, RLC(l1_base_fee, randomness, 32))
