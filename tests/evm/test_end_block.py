@@ -57,7 +57,7 @@ def test_end_block(
                     value=FQ(tx.id),
                 )
             )
-            # append CumlativeGasUsed
+            # append CumulativeGasUsed
             rw_rows.append(
                 RWTableRow(
                     FQ(23),

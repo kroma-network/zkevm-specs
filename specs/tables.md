@@ -8,7 +8,7 @@ Code spec at [table.py](../src/zkevm_specs/evm/table.py)
 
 Proved by the tx circuit.
 
-| 0 TxID | 1 Tag               | 2          | 3 value |
+| 0 TxID | 1 Tag               | 2 Index    | 3 Value |
 | ---    | ---                 | ---        | ---     |
 |        | *TxContextFieldTag* |            |         |
 | $TxID  | Nonce               | 0          | $value  |
@@ -49,7 +49,7 @@ There are 10 columns in `rw_table`.
             - **logID**: 32 bits, starts at 1 (corresponds to `logIndex + 1`), unique per tx/receipt.
             - **topicIndex, byteIndex**: 32 bits, indicates order in tx log topics or data.
     - col. 5 *FieldTag*
-        - For *Tag* **TxReceipt**: 
+        - For *Tag* **TxReceipt**:
             - **PostStateOrStatus**: 8 bits
             - **CumulativeGasUsed**: 64 bits
     - col. 6 *StorageKey* is field size and reserved for RLC encoded (Random Linear Combination) values

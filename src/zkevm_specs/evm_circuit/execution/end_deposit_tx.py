@@ -6,10 +6,10 @@ from ..table import L1BlockFieldTag, CallContextFieldTag, TxContextFieldTag, TxR
 def end_deposit_tx(instruction: Instruction):
     tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId)
     is_persistent = instruction.call_context_lookup(CallContextFieldTag.IsPersistent)
-    
+
     tx_type = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Type)
     instruction.constrain_equal(tx_type, FQ(DEPOSIT_TX_TYPE))
-    
+
     is_first_tx = tx_id == 1
     tx_gas = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Gas)
     gas_used = 0 if is_first_tx else tx_gas
@@ -29,7 +29,7 @@ def end_deposit_tx(instruction: Instruction):
         current_cumulative_gas_used = instruction.tx_receipt_read(
             tx_id - FQ(1), TxReceiptFieldTag.CumulativeGasUsed
         ).expr()
-        
+
     instruction.constrain_equal(
         current_cumulative_gas_used + gas_used,
         instruction.tx_receipt_write(tx_id, TxReceiptFieldTag.CumulativeGasUsed),
@@ -39,7 +39,7 @@ def end_deposit_tx(instruction: Instruction):
         instruction.l1_block_write(L1BlockFieldTag.L1BaseFee)
         instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
         instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
-    
+
     # When to next transaction
     if instruction.next.execution_state == ExecutionState.BeginTx:
         # Check next tx_id is increased by 1

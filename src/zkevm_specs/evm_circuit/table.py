@@ -289,7 +289,7 @@ class L1BlockFieldTag(IntEnum):
     L1FeeOverhead = auto()
     L1FeeScalar = auto()
 
-    
+
 class TxReceiptFieldTag(IntEnum):
     """
     Tag for RWTable lookup with tag TxReceipt, which is used to index specific

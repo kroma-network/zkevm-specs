@@ -686,7 +686,7 @@ class Instruction:
             key4=FQ(0),
         ).value
         return value
-    
+
     def l1_block_write(
         self,
         field_tag: L1BlockFieldTag,
@@ -697,7 +697,7 @@ class Instruction:
             key3=FQ(field_tag),
         ).value
         return value
-    
+
     def l1_block_read(
         self,
         field_tag: L1BlockFieldTag,
