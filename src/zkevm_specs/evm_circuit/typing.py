@@ -16,6 +16,7 @@ from typing import (
 )
 from functools import reduce
 from itertools import chain
+import rlp # type: ignore
 
 from ..util import (
     U64,
@@ -151,7 +152,6 @@ class Transaction:
     Kroma
     """
     mint: U256
-    rollup_data_gas_cost: U64
 
     def __init__(
         self,
@@ -167,7 +167,6 @@ class Transaction:
         invalid_tx: int = 0,
         access_list: List[AccessTuple] = list(),
         mint: U256 = U256(0),
-        rollup_data_gas_cost: U64 = U64(0),
     ) -> None:
         self.id = id
         self.type_ = type_
@@ -181,7 +180,6 @@ class Transaction:
         self.invalid_tx = invalid_tx
         self.access_list = access_list
         self.mint = mint
-        self.rollup_data_gas_cost = rollup_data_gas_cost
 
     @classmethod
     def system_deposit(
@@ -232,8 +230,6 @@ class Transaction:
             list(),
             # mint
             U256(0),
-            # rollup_data_gas_cost
-            U64(0)
         )
         return tx
 
@@ -273,8 +269,6 @@ class Transaction:
             list(),
             # mint
             mint,
-            # rollup_data_gas_cost
-            U64(0)
         )
         return tx
 
@@ -305,10 +299,11 @@ class Transaction:
             list(),
             # mint
             U256(0),
-            # rollup_data_gas_cost
-            U64(0)
         )
         return tx
+
+    def is_deposit(self) -> bool:
+        return self.type_ == DEPOSIT_TX_TYPE
 
     def call_data_gas_cost(self) -> int:
         return reduce(
@@ -330,6 +325,42 @@ class Transaction:
                 GAS_COST_ACCESS_LIST_ADDRESS
                 + len(access_tuple.storage_keys) * GAS_COST_ACCESS_LIST_STORAGE
                 for access_tuple in self.access_list
+            ]
+        )
+
+    def rollup_data_gas_cost(self) -> int:
+        return reduce(
+            lambda acc, byte: (
+                acc
+                + (
+                    GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE
+                    if byte == 0
+                    else GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE
+                )
+            ),
+            self.rlp(),
+            0,
+        )
+
+    def _encode_to(self):
+        if self.callee_address is None:
+            return bytes(0)
+        return self.callee_address.to_bytes(20, "big")
+
+    def rlp(self) -> bytes:
+        # TODO(chokobole): Support rlp encoding for custom transactions.
+        return rlp.encode(
+            [
+                self.nonce,
+                self.gas_price,
+                self.gas,
+                self._encode_to(),
+                self.value,
+                self.call_data,
+                # TODO(chokobole): Support signature.
+                0,
+                0,
+                0
             ]
         )
 
@@ -407,7 +438,7 @@ class Transaction:
                 FQ(self.id),
                 FQ(TxContextFieldTag.RollupDataGasCost),
                 FQ(0),
-                FQ(self.rollup_data_gas_cost),
+                FQ(self.rollup_data_gas_cost()),
             ),
         ]
 
