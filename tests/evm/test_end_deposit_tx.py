@@ -14,7 +14,6 @@ from zkevm_specs.evm_circuit import (
     verify_steps,
 )
 from zkevm_specs.util import (
-    DEPOSIT_TX_TYPE,
     EMPTY_CODE_HASH,
     L1_BASE_FEE,
     L1_FEE_OVERHEAD,
@@ -47,9 +46,8 @@ TESTING_DATA = (
     ),
     # Tx with non-capped refund
     (
-        Transaction(
-            id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
-            type_=DEPOSIT_TX_TYPE
+        Transaction.deposit(
+            id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000,
         ),
         994,
         False,
@@ -59,9 +57,8 @@ TESTING_DATA = (
     ),
     # Tx with capped refund
     (
-        Transaction(
-            id=4, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=65000, gas_price=int(2e9),
-            type_=DEPOSIT_TX_TYPE
+        Transaction.deposit(
+            id=4, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=65000,
         ),
         3952,
         False,
@@ -71,9 +68,8 @@ TESTING_DATA = (
     ),
     # Last tx
     (
-        Transaction(
-            id=5, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=21000, gas_price=int(2e9),
-            type_=DEPOSIT_TX_TYPE
+        Transaction.deposit(
+            id=5, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=21000,
         ),
         0,  # gas_left
         True,  # is_last_tx
@@ -96,56 +92,44 @@ def test_end_deposit_tx(
     l1_fee_data: tuple
 ):
     randomness = rand_fq()
-    block = Block()
 
-    # check it is first tx
-    is_first_tx = tx.id == 1
+    block = Block()
 
     rw_dictionary = (
         # fmt: off
-        RWDictionary(14)
+        RWDictionary(17)
             .call_context_read(1, CallContextFieldTag.TxId, tx.id)
             .call_context_read(1, CallContextFieldTag.IsPersistent, 1)
-            .tx_receipt_write(tx.id, TxReceiptFieldTag.PostStateOrStatus, 1)
+            .tx_receipt_write(tx.id, TxReceiptFieldTag.PostStateOrStatus, 1 - tx.invalid_tx)
             .tx_receipt_write(tx.id, TxReceiptFieldTag.LogLength, 0)
         # fmt: on
     )
 
+    # check it is first tx
+    is_first_tx = tx.id == 1
     if is_first_tx:
         assert current_cumulative_gas_used == 0
-        gas_used = 0
+        rw_dictionary.tx_receipt_write(
+            tx.id, TxReceiptFieldTag.CumulativeGasUsed, tx.gas - gas_left
+        )
     else:
-        gas_used = tx.gas
         rw_dictionary.tx_receipt_read(
             tx.id - 1, TxReceiptFieldTag.CumulativeGasUsed, current_cumulative_gas_used
         )
-
-    rw_dictionary.tx_receipt_write(
-        tx.id,
-        TxReceiptFieldTag.CumulativeGasUsed,
-        gas_used + current_cumulative_gas_used,
-    )
+        rw_dictionary.tx_receipt_write(
+            tx.id,
+            TxReceiptFieldTag.CumulativeGasUsed,
+            tx.gas + current_cumulative_gas_used,
+        )
 
     if is_first_tx:
         l1_base_fee, l1_fee_overhead, l1_fee_scalar = l1_fee_data
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1BaseFee, RLC(l1_base_fee, randomness, 32))
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeOverhead, RLC(l1_fee_overhead, randomness, 32))
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeScalar, RLC(l1_fee_scalar, randomness, 32))
-    # rw count so far : 19 + (1-is_first_tx) + 3*is_first_tx = 20 + 2*is_first_tx
 
     if not is_last_tx:
-        rw_dictionary.call_context_read(20 + 2*is_first_tx + 1, CallContextFieldTag.TxId, tx.id + 1)
-        next_step = StepState(
-            execution_state=ExecutionState.BeginTx ,
-            rw_counter=20 + 2*is_first_tx + 1,
-            call_id=0,
-        )
-    else:
-        next_step = StepState(
-            execution_state=ExecutionState.EndBlock ,
-            rw_counter=20 + 2*is_first_tx,
-            call_id=1,
-        )
+        rw_dictionary.call_context_read(25 + 2*is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
 
     tables = Tables(
         block_table=set(block.table_assignments(randomness)),
@@ -160,7 +144,7 @@ def test_end_deposit_tx(
         steps=[
             StepState(
                 execution_state=ExecutionState.EndDepositTx,
-                rw_counter=14,
+                rw_counter=17,
                 call_id=1,
                 is_root=True,
                 is_create=False,
@@ -170,7 +154,11 @@ def test_end_deposit_tx(
                 gas_left=gas_left,
                 reversible_write_counter=2,
             ),
-            next_step,
+            StepState(
+                execution_state=ExecutionState.EndBlock if is_last_tx else ExecutionState.BeginTx,
+                rw_counter=25 + 2*is_first_tx - is_last_tx,
+                call_id=1 if is_last_tx else 0,
+            ),
         ],
         success=success,
     )
