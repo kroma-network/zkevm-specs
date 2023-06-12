@@ -264,7 +264,7 @@ def verify_circuit(
     keccak_table = witness.keccak_table
     for tx_index in range(MAX_TXS):
         assert_msg = f"Constraints failed for tx_index = {tx_index}"
-        tx_row_index = tx_index * Tag.TxSignHash
+        tx_row_index = tx_index * Tag.fixed_len()
         caller_addr_index = tx_row_index + Tag.CallerAddress - 1
         tx_sign_hash_index = tx_row_index + Tag.TxSignHash - 1
 
@@ -301,6 +301,11 @@ class Transaction(NamedTuple):
     sig_r: U256
     sig_s: U256
 
+    """
+    Kroma
+    """
+    mint: U256
+
     def encode_to(self):
         if self.to is None:
             return bytes(0)
@@ -322,6 +327,8 @@ def padding_tx(tx_id: int) -> List[Row]:
         Row(FQ(tx_id), FQ(Tag.TxInvalid), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.AccessListGasCost), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.TxSignHash), FQ(0), FQ(0)),
+        Row(FQ(tx_id), FQ(Tag.Mint), FQ(0), FQ(0)),
+        Row(FQ(tx_id), FQ(Tag.RollupDataGasCost), FQ(0), FQ(0)),
     ]
 
 
@@ -361,6 +368,17 @@ def tx2witness(
         ]
     )
 
+    rollup_data_gas_cost = sum(
+        [
+             (
+                GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE
+                if byte == 0
+                else GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE
+            )
+            for byte in tx_sign_data
+        ]
+    )
+
     # TODO: support (EIP 2930) type TX
     # access_list_gas_cost = sum(
     #     [
@@ -388,6 +406,9 @@ def tx2witness(
     rows.append(Row(tx_id, FQ(Tag.AccessListGasCost), FQ(0), FQ(access_list_gas_cost)))
     tx_sign_hash_rlc = RLC(int.from_bytes(tx_sign_hash, "big"), randomness).expr()
     rows.append(Row(tx_id, FQ(Tag.TxSignHash), FQ(0), tx_sign_hash_rlc))
+    # Kroma
+    rows.append(Row(tx_id, FQ(Tag.Mint), FQ(0), RLC(tx.mint, randomness).expr()))
+    rows.append(Row(tx_id, FQ(Tag.RollupDataGasCost), FQ(0), FQ(rollup_data_gas_cost)))
     for byte_index, byte in enumerate(tx.data):
         rows.append(Row(tx_id, FQ(Tag.CallData), FQ(byte_index), FQ(byte)))
 
@@ -461,8 +482,8 @@ def txs2witness(
         FQ(0),
         dummy_ecdsa_chip,
     )
-    # Fill the rest of sign_verifications with the witnessess assigned to 0s
-    # and dummy ecdsa vefification values to disable the verification.
+    # Fill the rest of sign_verifications with the witnesses assigned to 0s
+    # and dummy ecdsa verification values to disable the verification.
     sign_verifications = sign_verifications + [padding_sign_verification] * (MAX_TXS - len(txs))
 
     return Witness(rows, keccak_table, sign_verifications)

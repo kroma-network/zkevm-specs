@@ -23,7 +23,7 @@ def sign_tx(sk: keys.PrivateKey, tx: Transaction, chain_id: U64) -> Transaction:
     sig_r = sig.r
     sig_s = sig.s
     return Transaction(
-        tx.type_, tx.nonce, tx.gas_price, tx.gas, tx.to, tx.value, tx.data, sig_v, sig_r, sig_s
+        tx.type_, tx.nonce, tx.gas_price, tx.gas, tx.to, tx.value, tx.data, sig_v, sig_r, sig_s, tx.mint
     )
 
 
@@ -45,7 +45,7 @@ def verify(
         pass
     else:
         witness = txs2witness(txs_or_witness, chain_id, MAX_TXS, MAX_CALLDATA_BYTES, randomness)
-    assert len(witness.rows) == MAX_TXS * Tag.TxSignHash + MAX_CALLDATA_BYTES
+    assert len(witness.rows) == MAX_TXS * Tag.fixed_len() + MAX_CALLDATA_BYTES
     assert len(witness.sign_verifications) == MAX_TXS
     ok = True
     if success:
@@ -92,8 +92,9 @@ def test_tx2witness():
     to = 0x12345678
     value = 0x1029384756
     data = bytes([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99])
+    mint = 0
 
-    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0)
+    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, mint)
     tx = sign_tx(sk, tx, chain_id)
     keccak_table = KeccakTable()
     rows, sign_verification = tx2witness(0, tx, chain_id, r, keccak_table)
@@ -109,8 +110,9 @@ def gen_tx(i: int, sk: keys.PrivateKey, to: int, chain_id) -> Transaction:
     gas = 20000 + i * 3
     value = 0x30000 + i * 4
     data = bytes([i] * i)
+    mint = 0
 
-    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0)
+    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, mint)
     tx = sign_tx(sk, tx, chain_id)
     return tx
 
@@ -186,7 +188,7 @@ def test_bad_msg_hash():
 def test_bad_addr_copy():
     witness, chain_id, MAX_TXS, MAX_CALLDATA_BYTES = gen_valid_witness()
     rows = witness.rows
-    row_addr_offset = 0 * Tag.TxSignHash + Tag.CallerAddress - 1
+    row_addr_offset = 0 * Tag.fixed_len() + Tag.CallerAddress - 1
     rows[row_addr_offset].value = FQ(1213)
     witness = Witness(rows, witness.keccak_table, witness.sign_verifications)
     verify(witness, MAX_TXS, MAX_CALLDATA_BYTES, chain_id, r, success=False)
@@ -195,7 +197,7 @@ def test_bad_addr_copy():
 def test_bad_sign_hash_copy():
     witness, chain_id, MAX_TXS, MAX_CALLDATA_BYTES = gen_valid_witness()
     rows = witness.rows
-    row_hash_offset = 0 * Tag.TxSignHash + Tag.TxSignHash - 1
+    row_hash_offset = 0 * Tag.fixed_len() + Tag.TxSignHash - 1
     rows[row_hash_offset].value = FQ(2324)
     witness = Witness(rows, witness.keccak_table, witness.sign_verifications)
     verify(witness, MAX_TXS, MAX_CALLDATA_BYTES, chain_id, r, success=False)
