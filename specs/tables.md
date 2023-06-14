@@ -11,6 +11,7 @@ Proved by the tx circuit.
 | 0 TxID | 1 Tag               | 2 Index    | 3 Value |
 | ---    | ---                 | ---        | ---     |
 |        | *TxContextFieldTag* |            |         |
+| $TxID  | Type                | 0          | $value  |
 | $TxID  | Nonce               | 0          | $value  |
 | $TxID  | Gas                 | 0          | $value  |
 | $TxID  | GasPrice            | 0          | $value  |
@@ -20,9 +21,9 @@ Proved by the tx circuit.
 | $TxID  | Value               | 0          | $value  |
 | $TxID  | CallDataLength      | 0          | $value  |
 | $TxID  | CallDataGasCost     | 0          | $value  |
-| $TxID  | TxSignHash          | 0          | $value  |
 | $TxID  | TxInvalid           | 0          | $value  |
 | $TxID  | AccessListGasCost   | 0          | $value  |
+| $TxID  | TxSignHash          | 0          | $value  |
 | $TxID  | Mint                | 0          | $value  |
 | $TxID  | RollupDataGasCost   | 0          | $value  |
 | $TxID  | SourceHash          | 0          | $value  |
