@@ -25,6 +25,7 @@ Proved by the tx circuit.
 | $TxID  | AccessListGasCost   | 0          | $value  |
 | $TxID  | Mint                | 0          | $value  |
 | $TxID  | RollupDataGasCost   | 0          | $value  |
+| $TxID  | SourceHash          | 0          | $value  |
 | $TxID  | CallData            | $ByteIndex | $value  |
 | $TxID  | Pad                 | 0          | $value  |
 
@@ -34,6 +35,9 @@ NOTE:
 - `AccessListGasCost` is the `accessList` gas cost of the tx, which equals to `sum([G_accesslistaddress + G_accessliststorage * len(TA[j]) for j in len(TA)])` (EIP 2930).
 - `Mint` is the amount of ETH deposited from L1 to L2 (in units of Wei).
 - `RollupDataGasCost` is the gas cost required to roll up a transaction.
+- `SourceHash` is the hash calculated as per [source hash computation]
+
+[source hash computation]: https://github.com/kroma-network/kroma/blob/dev/specs/deposits.md#source-hash-computation
 
 ## `rw_table`
 
