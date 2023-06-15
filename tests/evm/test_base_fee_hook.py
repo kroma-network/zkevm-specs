@@ -1,6 +1,7 @@
 import pytest
 
-from zkevm_specs.evm import (
+from common import rand_fq
+from zkevm_specs.evm_circuit import (
     AccountFieldTag,
     Block,
     CallContextFieldTag,
@@ -11,7 +12,12 @@ from zkevm_specs.evm import (
     Transaction,
     verify_steps,
 )
-from zkevm_specs.util import BASE_FEE_RECIPIENT, EMPTY_CODE_HASH, L1_BASE_FEE, rand_fq, RLC
+from zkevm_specs.util import (
+    BASE_FEE_RECIPIENT,
+    EMPTY_CODE_HASH,
+    L1_BASE_FEE,
+    RLC
+)
 
 CALLEE_ADDRESS = 0xFF
 
@@ -59,12 +65,12 @@ def test_base_fee_hook(
     block = Block(
         base_fee=L1_BASE_FEE
     )
-    
+
     gas_used = tx.gas - gas_left
     mul_base_fee_by_gas_used = block.base_fee * gas_used if not wrong_fee_amount else 10
     mul_base_fee_by_gas_used = RLC(mul_base_fee_by_gas_used, randomness, 32)
     zero_rlc = RLC(0, randomness, 32)
-    
+
     rw_dictionary = (
         # fmt: off
         RWDictionary(17)
@@ -72,7 +78,7 @@ def test_base_fee_hook(
             .account_write(BASE_FEE_RECIPIENT, AccountFieldTag.Balance, mul_base_fee_by_gas_used, zero_rlc)
         # fmt: on
     )
-    
+
     tables = Tables(
         block_table=set(block.table_assignments(randomness)),
         tx_table=set(tx.table_assignments(randomness)),

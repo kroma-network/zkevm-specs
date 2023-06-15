@@ -1,7 +1,6 @@
 import pytest
 
-from typing import Optional
-from zkevm_specs.evm import (
+from zkevm_specs.evm_circuit import (
     ExecutionState,
     StepState,
     Opcode,
@@ -11,8 +10,8 @@ from zkevm_specs.evm import (
     Bytecode,
     RWDictionary,
 )
-from zkevm_specs.util import rand_fq, rand_word, RLC
-from common import generate_nasty_tests
+from zkevm_specs.util import RLC
+from common import generate_nasty_tests, rand_fq, rand_word
 
 
 TESTING_DATA = [
@@ -33,7 +32,7 @@ def test_add_sub(opcode: Opcode, a: int, b: int):
     a = RLC(a, randomness)
     b = RLC(b, randomness)
 
-    bytecode = Bytecode().add(a, b) if opcode == Opcode.ADD else Bytecode().sub(a, b)
+    bytecode = Bytecode().add(a, b).stop() if opcode == Opcode.ADD else Bytecode().sub(a, b).stop()
     bytecode_hash = RLC(bytecode.hash(), randomness)
 
     tables = Tables(

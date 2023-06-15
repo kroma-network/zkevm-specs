@@ -1,15 +1,12 @@
 import pytest
-from typing import Sequence, Tuple, Mapping
 
-from zkevm_specs.evm import (
+from zkevm_specs.evm_circuit import (
     Opcode,
     ExecutionState,
     StepState,
     verify_steps,
     Tables,
-    RWTableTag,
     CallContextFieldTag,
-    RW,
     RLC,
     Block,
     Transaction,
@@ -19,17 +16,8 @@ from zkevm_specs.evm import (
     CopyDataTypeTag,
 )
 from zkevm_specs.copy_circuit import verify_copy_table
-from zkevm_specs.util import (
-    rand_fq,
-    rand_bytes,
-    GAS_COST_COPY,
-    MAX_N_BYTES_COPY_TO_MEMORY,
-    MEMORY_EXPANSION_QUAD_DENOMINATOR,
-    MEMORY_EXPANSION_LINEAR_COEFF,
-    memory_word_size,
-    memory_expansion,
-)
-
+from zkevm_specs.util import GAS_COST_COPY
+from common import memory_expansion, memory_word_size, rand_fq, rand_bytes
 
 TX_ID = 13
 CALLER_ID = 0
@@ -99,7 +87,7 @@ def test_calldatacopy(
             code_hash=bytecode_hash,
             program_counter=99,
             stack_pointer=1021,
-            memory_size=curr_mem_size,
+            memory_word_size=curr_mem_size,
             gas_left=gas,
         )
     ]
@@ -155,7 +143,7 @@ def test_calldatacopy(
             code_hash=bytecode_hash,
             program_counter=100,
             stack_pointer=1024,
-            memory_size=next_mem_size,
+            memory_word_size=next_mem_size,
             gas_left=0,
         )
     )

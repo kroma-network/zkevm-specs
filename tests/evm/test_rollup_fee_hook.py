@@ -1,6 +1,7 @@
 import pytest
 
-from zkevm_specs.evm import (
+from common import rand_fq
+from zkevm_specs.evm_circuit import (
     AccountFieldTag,
     Block,
     CallContextFieldTag,
@@ -19,8 +20,7 @@ from zkevm_specs.util import (
     L1_FEE_OVERHEAD,
     L1_FEE_RECIPIENT,
     L1_FEE_SCALAR,
-    rand_fq, 
-    RLC, 
+    RLC,
 )
 
 CALLEE_ADDRESS = 0xFF
@@ -66,17 +66,17 @@ def test_rollup_fee_hook(
 ):
     randomness = rand_fq()
     block = Block()
-    
+
     l1_cost_remainder = 100
-    
+
     l1_gas_to_use = tx.rollup_data_gas_cost + L1_FEE_OVERHEAD
     l1_fee_tmp = l1_gas_to_use * L1_BASE_FEE
     l1_fee_tmp2 = l1_fee_tmp * L1_FEE_SCALAR
-    
+
     fee = int((l1_fee_tmp2 - l1_cost_remainder)/L1_COST_DENOMINATOR) if not wrong_fee else 10
     fee = RLC(fee, randomness, 32)
     zero_rlc = RLC(0, randomness, 32)
-    
+
     rw_dictionary = (
         # fmt: off
         RWDictionary(17)
@@ -87,7 +87,7 @@ def test_rollup_fee_hook(
             .account_write(L1_FEE_RECIPIENT, AccountFieldTag.Balance, fee, zero_rlc)
         # fmt: on
     )
-    
+
     tables = Tables(
         block_table=set(block.table_assignments(randomness)),
         tx_table=set(tx.table_assignments(randomness)),
