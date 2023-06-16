@@ -155,7 +155,9 @@ class Instruction:
         curr, next = self.curr.execution_state, self.next.execution_state
 
         # ExecutionState transition constraint for special ones
-        if curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx]:
+        if curr == ExecutionState.EndDepositTx:
+            assert next in [ExecutionState.BeginDepositTx, ExecutionState.BeginTx, ExecutionState.EndBlock]
+        elif curr == ExecutionState.EndTx:
             assert next in [ExecutionState.BeginTx, ExecutionState.EndBlock]
         elif curr == ExecutionState.EndBlock:
             assert next == ExecutionState.EndBlock
@@ -165,12 +167,14 @@ class Instruction:
             assert next == ExecutionState.EndTx
 
         # Negation ExecutionState transition constraint for rest ones
-        if next == ExecutionState.BeginTx:
+        if next == ExecutionState.BeginDepositTx:
+            assert curr == ExecutionState.EndDepositTx
+        elif next == ExecutionState.BeginTx:
             assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx]
         elif next == ExecutionState.EndTx:
             assert curr.halts() or curr == ExecutionState.RollupFeeHook
         elif next == ExecutionState.EndDepositTx:
-            assert curr.halts() or curr == ExecutionState.BeginTx
+            assert curr.halts() or curr == ExecutionState.BeginDepositTx
         elif next == ExecutionState.EndBlock:
             assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx, ExecutionState.EndBlock]
         elif next == ExecutionState.BaseFeeHook:

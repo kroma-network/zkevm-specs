@@ -160,6 +160,11 @@ class TxContextFieldTag(IntEnum):
     AccessListGasCost = auto()
     TxSignHash = auto()
     CallData = auto()
+
+    """
+    Kroma
+    """
+    Mint = auto()
     RollupDataGasCost = auto()
 
 

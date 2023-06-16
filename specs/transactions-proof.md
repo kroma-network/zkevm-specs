@@ -171,7 +171,7 @@ For this implementation, the Tx Table is extended to look like this:
 | $TxID  | TxSignHash          |            | $value: rlc |
 | $TxID  | CallData            | $ByteIndex | $value: raw |
 
-For the ECDSA signature verification, instead of doing lookups to the ECDSA table we'll just use an ECDSA verification gadget for each transaction.  Since each transaction uses a variable number of rows due to the variable length CallData, we'll rearrange the table so that each transaction starts at a fixed offset like this (by moving all the CallData rows at the end):
+For the ECDSA signature verification, instead of doing lookups to the ECDSA table we'll just use an ECDSA verification gadget for each transaction. Since each transaction uses a variable number of rows due to the variable length CallData, we'll rearrange the table so that each transaction starts at a fixed offset like this (by moving all the CallData rows at the end):
 
 For each transaction:
 

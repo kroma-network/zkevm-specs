@@ -32,6 +32,9 @@ from ..util import (
     GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE,
     GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE,
     EMPTY_CODE_HASH,
+    L1_BLOCK,
+    SYSTEM_DEPOSIT_TX_CALLER,
+    SYSTEM_DEPOSIT_TX_GAS,
 )
 from .table import (
     RW,
@@ -143,6 +146,11 @@ class Transaction:
     call_data: bytes
     invalid_tx: int
     access_list: List[AccessTuple]
+
+    """
+    Kroma
+    """
+    mint: U256
     rollup_data_gas_cost: U64
 
     def __init__(
@@ -158,6 +166,7 @@ class Transaction:
         call_data: bytes = bytes(),
         invalid_tx: int = 0,
         access_list: List[AccessTuple] = list(),
+        mint: U256 = U256(0),
         rollup_data_gas_cost: U64 = U64(0),
     ) -> None:
         self.id = id
@@ -171,10 +180,33 @@ class Transaction:
         self.call_data = call_data
         self.invalid_tx = invalid_tx
         self.access_list = access_list
+        self.mint = mint
         self.rollup_data_gas_cost = rollup_data_gas_cost
 
     @classmethod
-    def system_deposit(obj, call_data: bytes = bytes()):
+    def system_deposit(
+        obj,
+        number: U64 = U64(0),
+        timestamp: U64 = U64(0),
+        basefee: U256 = U256(8),
+        hash: U256 = U256(0),
+        sequence_number: U64 = U64(0),
+        batcher_hash: U256 = U256(0),
+        l1_fee_overhead: U256 = U256(2100),
+        l1_fee_scalar: U256 = U256(1000000),
+        reward_ratio: U256 = U256(1000),
+    ) -> Transaction:
+        call_data = \
+            bytes.fromhex("efc674eb") + \
+            number.to_bytes(8, 'big') + \
+            timestamp.to_bytes(8, 'big') + \
+            basefee.to_bytes(32, 'big') + \
+            hash.to_bytes(32, 'big') + \
+            sequence_number.to_bytes(8, 'big') + \
+            batcher_hash.to_bytes(32, 'big') + \
+            l1_fee_overhead.to_bytes(32, 'big') + \
+            l1_fee_scalar.to_bytes(32, 'big') + \
+            reward_ratio.to_bytes(32, 'big')
         tx = obj(
             # id
             1,
@@ -183,13 +215,13 @@ class Transaction:
             # nonce
             U64(0),
             # gas
-            U64(150000000),
+            U64(SYSTEM_DEPOSIT_TX_GAS),
             # gas_price
             U256(0),
             # caller_address
-            U160(0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001),
+            U160(SYSTEM_DEPOSIT_TX_CALLER),
             # callee_address
-            U160(0x4200000000000000000000000000000000000015),
+            U160(L1_BLOCK),
             # value
             U256(0),
             # call_data
@@ -198,13 +230,56 @@ class Transaction:
             0,
             # access_list
             list(),
+            # mint
+            U256(0),
             # rollup_data_gas_cost
             U64(0)
         )
         return tx
 
     @classmethod
-    def padding(obj, id: int):
+    def deposit(
+        obj,
+        id: int,
+        gas: U64 = U64(21000),
+        caller_address: U160 = U160(0),
+        callee_address: U160 = U160(0),
+        value: U256 = U256(0),
+        call_data: bytes = bytes(),
+        mint: U256 = U256(0),
+    ) -> Transaction:
+        tx = obj(
+            # id
+            id,
+            # type
+            DEPOSIT_TX_TYPE,
+            # nonce
+            U64(0),
+            # gas
+            gas,
+            # gas_price
+            U256(0),
+            # caller_address
+            caller_address,
+            # callee_address
+            callee_address,
+            # value
+            value,
+            # call_data
+            call_data,
+            # invalid_tx
+            0,
+            # access_list
+            list(),
+            # mint
+            mint,
+            # rollup_data_gas_cost
+            U64(0)
+        )
+        return tx
+
+    @classmethod
+    def padding(obj, id: int) -> Transaction:
         tx = obj(
             # id
             id,
@@ -228,6 +303,8 @@ class Transaction:
             0,
             # access_list
             list(),
+            # mint
+            U256(0),
             # rollup_data_gas_cost
             U64(0)
         )
@@ -319,6 +396,12 @@ class Transaction:
                 FQ(TxContextFieldTag.TxSignHash),
                 FQ(0),
                 FQ(1234),  # Mock value for TxSignHash
+            ),
+            TxTableRow(
+                FQ(self.id),
+                FQ(TxContextFieldTag.Mint),
+                FQ(0),
+                FQ(self.mint),
             ),
             TxTableRow(
                 FQ(self.id),

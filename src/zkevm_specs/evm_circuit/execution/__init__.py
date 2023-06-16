@@ -3,6 +3,7 @@ from typing import Callable, Dict
 from ..execution_state import ExecutionState
 
 from .base_fee_hook import *
+from .begin_deposit_tx import *
 from .begin_tx import *
 from .end_block import *
 from .end_deposit_tx import *
@@ -67,6 +68,7 @@ from .error_invalid_opcode import *
 
 EXECUTION_STATE_IMPL: Dict[ExecutionState, Callable] = {
     ExecutionState.BaseFeeHook: base_fee_hook,
+    ExecutionState.BeginDepositTx: begin_deposit_tx,
     ExecutionState.BeginTx: begin_tx,
     ExecutionState.EndBlock: end_block,
     ExecutionState.EndDepositTx: end_deposit_tx,
