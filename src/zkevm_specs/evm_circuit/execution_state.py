@@ -17,6 +17,7 @@ class ExecutionState(IntEnum):
     """
 
     BaseFeeHook = auto()
+    BeginDepositTx = auto()
     BeginTx = auto()
     EndBlock = auto()
     EndDepositTx = auto()

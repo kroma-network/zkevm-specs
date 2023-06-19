@@ -160,7 +160,17 @@ class TxContextFieldTag(IntEnum):
     AccessListGasCost = auto()
     TxSignHash = auto()
     CallData = auto()
+
+    """
+    Kroma
+    """
+    Mint = auto()
     RollupDataGasCost = auto()
+    SourceHash = auto()
+
+    @classmethod
+    def fixed_len(obj) -> int:
+        return obj.SourceHash - 1
 
 
 class BytecodeFieldTag(IntEnum):
@@ -289,7 +299,7 @@ class L1BlockFieldTag(IntEnum):
     L1FeeOverhead = auto()
     L1FeeScalar = auto()
 
-    
+
 class TxReceiptFieldTag(IntEnum):
     """
     Tag for RWTable lookup with tag TxReceipt, which is used to index specific

@@ -8,9 +8,10 @@ Code spec at [table.py](../src/zkevm_specs/evm/table.py)
 
 Proved by the tx circuit.
 
-| 0 TxID | 1 Tag               | 2          | 3 value |
+| 0 TxID | 1 Tag               | 2 Index    | 3 Value |
 | ---    | ---                 | ---        | ---     |
 |        | *TxContextFieldTag* |            |         |
+| $TxID  | Type                | 0          | $value  |
 | $TxID  | Nonce               | 0          | $value  |
 | $TxID  | Gas                 | 0          | $value  |
 | $TxID  | GasPrice            | 0          | $value  |
@@ -20,16 +21,24 @@ Proved by the tx circuit.
 | $TxID  | Value               | 0          | $value  |
 | $TxID  | CallDataLength      | 0          | $value  |
 | $TxID  | CallDataGasCost     | 0          | $value  |
-| $TxID  | TxSignHash          | 0          | $value  |
 | $TxID  | TxInvalid           | 0          | $value  |
 | $TxID  | AccessListGasCost   | 0          | $value  |
+| $TxID  | TxSignHash          | 0          | $value  |
+| $TxID  | Mint                | 0          | $value  |
+| $TxID  | RollupDataGasCost   | 0          | $value  |
+| $TxID  | SourceHash          | 0          | $value  |
 | $TxID  | CallData            | $ByteIndex | $value  |
 | $TxID  | Pad                 | 0          | $value  |
 
 NOTE:
-- `CallDataGasCost` and `TxSignHash` are values calculated by the verifier and used to reduce the circuit complexity.  They may be removed in the future.
+- `CallDataGasCost`, `TxSignHash` and `RollupDataGasCost` are values calculated by the verifier and used to reduce the circuit complexity. They may be removed in the future.
 - `TxInvalid` is a flag to tell the circuit which tx is invalid and should not be executed. We check `balance`, `nonce`, and `intrinsic gas` within `begin_tx`, `end_tx`, and `end_block` steps to make sure all txs being processed are valid, and all others are invalid and not executed. Invalid transactions go from the `begin_tx` state directly to the `end_tx` state and do not have any side effects.
 - `AccessListGasCost` is the `accessList` gas cost of the tx, which equals to `sum([G_accesslistaddress + G_accessliststorage * len(TA[j]) for j in len(TA)])` (EIP 2930).
+- `Mint` is the amount of ETH deposited from L1 to L2 (in units of Wei).
+- `RollupDataGasCost` is the gas cost required to roll up a transaction.
+- `SourceHash` is the hash calculated as per [source hash computation]
+
+[source hash computation]: https://github.com/kroma-network/kroma/blob/dev/specs/deposits.md#source-hash-computation
 
 ## `rw_table`
 
@@ -49,7 +58,7 @@ There are 10 columns in `rw_table`.
             - **logID**: 32 bits, starts at 1 (corresponds to `logIndex + 1`), unique per tx/receipt.
             - **topicIndex, byteIndex**: 32 bits, indicates order in tx log topics or data.
     - col. 5 *FieldTag*
-        - For *Tag* **TxReceipt**: 
+        - For *Tag* **TxReceipt**:
             - **PostStateOrStatus**: 8 bits
             - **CumulativeGasUsed**: 64 bits
     - col. 6 *StorageKey* is field size and reserved for RLC encoded (Random Linear Combination) values

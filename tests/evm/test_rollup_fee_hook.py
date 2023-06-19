@@ -29,7 +29,6 @@ TESTING_DATA = (
     (
         Transaction(
             id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
-            rollup_data_gas_cost=1000
         ),
         False,
         False,
@@ -38,7 +37,6 @@ TESTING_DATA = (
     (
         Transaction(
             id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
-            rollup_data_gas_cost=1000
         ),
         False,
         True,
@@ -47,7 +45,6 @@ TESTING_DATA = (
         (
         Transaction(
             id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
-            rollup_data_gas_cost=1000
         ),
         True,
         False,
@@ -69,7 +66,7 @@ def test_rollup_fee_hook(
 
     l1_cost_remainder = 100
 
-    l1_gas_to_use = tx.rollup_data_gas_cost + L1_FEE_OVERHEAD
+    l1_gas_to_use = tx.rollup_data_gas_cost() + L1_FEE_OVERHEAD
     l1_fee_tmp = l1_gas_to_use * L1_BASE_FEE
     l1_fee_tmp2 = l1_fee_tmp * L1_FEE_SCALAR
 

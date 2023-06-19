@@ -16,8 +16,10 @@ from typing import (
 )
 from functools import reduce
 from itertools import chain
+import rlp # type: ignore
 
 from ..util import (
+    SourceHashAux,
     U64,
     U160,
     U256,
@@ -32,6 +34,9 @@ from ..util import (
     GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE,
     GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE,
     EMPTY_CODE_HASH,
+    L1_BLOCK,
+    SYSTEM_DEPOSIT_TX_CALLER,
+    SYSTEM_DEPOSIT_TX_GAS,
 )
 from .table import (
     RW,
@@ -62,7 +67,7 @@ class Block:
     coinbase: U160
 
     # Gas needs a lot arithmetic operation or comparison in EVM circuit, so we
-    # assume gas limit in the near futuer will not exceed U64, to reduce the
+    # assume gas limit in the near future will not exceed U64, to reduce the
     # implementation complexity.
     gas_limit: U64
 
@@ -79,7 +84,7 @@ class Block:
     # to use the same chain_id, we set it as as a block parameter.
     chainid: U256
 
-    # It contains most recent 256 block hashes in history, where the lastest
+    # It contains most recent 256 block hashes in history, where the latest
     # one is at history_hashes[-1].
     history_hashes: Sequence[U256]
 
@@ -143,7 +148,14 @@ class Transaction:
     call_data: bytes
     invalid_tx: int
     access_list: List[AccessTuple]
-    rollup_data_gas_cost: U64
+
+    """
+    Kroma
+    """
+    mint: U256
+    # This is needed to compute source hash.
+    # See https://github.com/kroma-network/kroma/blob/dev/specs/deposits.md#source-hash-computation.
+    source_hash_aux: SourceHashAux
 
     def __init__(
         self,
@@ -158,7 +170,8 @@ class Transaction:
         call_data: bytes = bytes(),
         invalid_tx: int = 0,
         access_list: List[AccessTuple] = list(),
-        rollup_data_gas_cost: U64 = U64(0),
+        mint: U256 = U256(0),
+        source_hash_aux: SourceHashAux = SourceHashAux(),
     ) -> None:
         self.id = id
         self.type_ = type_
@@ -171,10 +184,35 @@ class Transaction:
         self.call_data = call_data
         self.invalid_tx = invalid_tx
         self.access_list = access_list
-        self.rollup_data_gas_cost = rollup_data_gas_cost
+        # Kroma
+        self.mint = mint
+        self.source_hash_aux = source_hash_aux
 
     @classmethod
-    def system_deposit(obj, call_data: bytes = bytes()):
+    def system_deposit(
+        obj,
+        number: U64 = U64(0),
+        timestamp: U64 = U64(0),
+        basefee: U256 = U256(8),
+        hash: U256 = U256(0),
+        sequence_number: U64 = U64(0),
+        batcher_hash: U256 = U256(0),
+        l1_fee_overhead: U256 = U256(2100),
+        l1_fee_scalar: U256 = U256(1000000),
+        reward_ratio: U256 = U256(1000),
+        source_hash_aux: SourceHashAux = SourceHashAux(),
+    ) -> Transaction:
+        call_data = \
+            bytes.fromhex("efc674eb") + \
+            number.to_bytes(8, 'big') + \
+            timestamp.to_bytes(8, 'big') + \
+            basefee.to_bytes(32, 'big') + \
+            hash.to_bytes(32, 'big') + \
+            sequence_number.to_bytes(8, 'big') + \
+            batcher_hash.to_bytes(32, 'big') + \
+            l1_fee_overhead.to_bytes(32, 'big') + \
+            l1_fee_scalar.to_bytes(32, 'big') + \
+            reward_ratio.to_bytes(32, 'big')
         tx = obj(
             # id
             1,
@@ -183,13 +221,13 @@ class Transaction:
             # nonce
             U64(0),
             # gas
-            U64(150000000),
+            U64(SYSTEM_DEPOSIT_TX_GAS),
             # gas_price
             U256(0),
             # caller_address
-            U160(0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001),
+            U160(SYSTEM_DEPOSIT_TX_CALLER),
             # callee_address
-            U160(0x4200000000000000000000000000000000000015),
+            U160(L1_BLOCK),
             # value
             U256(0),
             # call_data
@@ -198,13 +236,57 @@ class Transaction:
             0,
             # access_list
             list(),
-            # rollup_data_gas_cost
-            U64(0)
+            # mint
+            U256(0),
+            # source_hash_aux
+            source_hash_aux,
         )
         return tx
 
     @classmethod
-    def padding(obj, id: int):
+    def deposit(
+        obj,
+        id: int,
+        gas: U64 = U64(21000),
+        caller_address: U160 = U160(0),
+        callee_address: U160 = U160(0),
+        value: U256 = U256(0),
+        call_data: bytes = bytes(),
+        mint: U256 = U256(0),
+        source_hash_aux: SourceHashAux = SourceHashAux(),
+    ) -> Transaction:
+        tx = obj(
+            # id
+            id,
+            # type
+            DEPOSIT_TX_TYPE,
+            # nonce
+            U64(0),
+            # gas
+            gas,
+            # gas_price
+            U256(0),
+            # caller_address
+            caller_address,
+            # callee_address
+            callee_address,
+            # value
+            value,
+            # call_data
+            call_data,
+            # invalid_tx
+            0,
+            # access_list
+            list(),
+            # mint
+            mint,
+            # source_hash_aux
+            source_hash_aux,
+        )
+        return tx
+
+    @classmethod
+    def padding(obj, id: int) -> Transaction:
         tx = obj(
             # id
             id,
@@ -228,10 +310,15 @@ class Transaction:
             0,
             # access_list
             list(),
-            # rollup_data_gas_cost
-            U64(0)
+            # mint
+            U256(0),
+            # source_hash_aux
+            SourceHashAux(),
         )
         return tx
+
+    def is_deposit(self) -> bool:
+        return self.type_ == DEPOSIT_TX_TYPE
 
     def call_data_gas_cost(self) -> int:
         return reduce(
@@ -253,6 +340,42 @@ class Transaction:
                 GAS_COST_ACCESS_LIST_ADDRESS
                 + len(access_tuple.storage_keys) * GAS_COST_ACCESS_LIST_STORAGE
                 for access_tuple in self.access_list
+            ]
+        )
+
+    def rollup_data_gas_cost(self) -> int:
+        return reduce(
+            lambda acc, byte: (
+                acc
+                + (
+                    GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE
+                    if byte == 0
+                    else GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE
+                )
+            ),
+            self.rlp(),
+            0,
+        )
+
+    def _encode_to(self):
+        if self.callee_address is None:
+            return bytes(0)
+        return self.callee_address.to_bytes(20, "big")
+
+    def rlp(self) -> bytes:
+        # TODO(chokobole): Support rlp encoding for custom transactions.
+        return rlp.encode(
+            [
+                self.nonce,
+                self.gas_price,
+                self.gas,
+                self._encode_to(),
+                self.value,
+                self.call_data,
+                # TODO(chokobole): Support signature.
+                0,
+                0,
+                0
             ]
         )
 
@@ -320,11 +443,24 @@ class Transaction:
                 FQ(0),
                 FQ(1234),  # Mock value for TxSignHash
             ),
+            # Kroma
+            TxTableRow(
+                FQ(self.id),
+                FQ(TxContextFieldTag.Mint),
+                FQ(0),
+                FQ(self.mint),
+            ),
             TxTableRow(
                 FQ(self.id),
                 FQ(TxContextFieldTag.RollupDataGasCost),
                 FQ(0),
-                FQ(self.rollup_data_gas_cost),
+                FQ(self.rollup_data_gas_cost()),
+            ),
+            TxTableRow(
+                FQ(self.id),
+                FQ(TxContextFieldTag.SourceHash),
+                FQ(0),
+                RLC(self.source_hash_aux.source_hash(self.id, self.is_deposit()), randomness),
             ),
         ]
 
