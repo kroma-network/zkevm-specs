@@ -189,7 +189,7 @@ class RW(IntEnum):
 
 class RWTableTag(IntEnum):
     """
-    Tag for RWTable lookup, where the RWTable an advice-column table built by
+    Tag for RWTable lookup, where the RWTable is an advice-column table built by
     prover, which will be part of State circuit and each unit read-write data
     will be verified to be consistent between each write.
     """
