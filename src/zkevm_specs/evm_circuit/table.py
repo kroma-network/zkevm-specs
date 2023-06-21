@@ -166,11 +166,10 @@ class TxContextFieldTag(IntEnum):
     """
     Mint = auto()
     RollupDataGasCost = auto()
-    SourceHash = auto()
 
     @classmethod
-    def fixed_len(obj) -> int:
-        return obj.SourceHash - 1
+    def fixed_len(cls) -> int:
+        return cls.RollupDataGasCost - 1
 
 
 class BytecodeFieldTag(IntEnum):

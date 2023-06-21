@@ -3,7 +3,6 @@ from typing import NamedTuple, Tuple, List, Set, Union
 from .util import (
     FQ,
     RLC,
-    SourceHashAux,
     U160,
     U256,
     U64,
@@ -250,79 +249,10 @@ class SignVerifyChip:
             # 4. Verify the ECDSA signature
             self.ecdsa_chip.verify(assert_msg)
 
-class SourceHashChip:
-    """
-    Auxiliary Chip to verify a that a source hash is correctly computed.
-    """
-
-    tx_idx: FQ
-    tx_type: FQ
-    value_hash: RLC
-    source_hash: RLC
-    l1_block_hash_bytes: bytes
-    index_bytes: bytes
-    value_hash_bytes: bytes
-
-    def __init__(
-        self,
-        tx_idx: int,
-        tx_type: FQ,
-        value_hash: RLC,
-        source_hash: RLC,
-        l1_block_hash_bytes: bytes,
-        index_bytes: bytes,
-        value_hash_bytes: bytes,
-    ) -> None:
-        self.tx_idx = tx_idx
-        self.tx_type = tx_type
-        self.value_hash = value_hash
-        self.source_hash = source_hash
-        self.l1_block_hash_bytes = l1_block_hash_bytes
-        self.index_bytes = index_bytes
-        self.value_hash_bytes = value_hash_bytes
-
-    @classmethod
-    def assign(
-        cls, tx_idx: int, tx_type: FQ, source_hash_aux: SourceHashAux, randomness: FQ
-    ):
-        l1_block_hash_bytes = source_hash_aux.l1_block_hash.to_bytes(32, "big")
-        index_bytes = source_hash_aux.index.to_bytes(32, "big")
-        value_hash = keccak(l1_block_hash_bytes + index_bytes)
-        self_value_hash = RLC(value_hash, randomness)
-        domain_bytes = SourceHashAux.domain_bytes(tx_idx)
-        source_hash = keccak(domain_bytes + value_hash)
-        self_source_hash = RLC(source_hash, randomness)
-        return cls(tx_idx, tx_type, self_value_hash, self_source_hash, l1_block_hash_bytes, index_bytes, value_hash)
-
-    def verify(self, keccak_table: KeccakTable, randomness: FQ, assert_msg: str):
-        is_deposit_tx = FQ(self.tx_type == DEPOSIT_TX_TYPE)
-
-        value_bytes = bytes(reversed(self.l1_block_hash_bytes)) + bytes(
-            reversed(self.index_bytes)
-        )
-        keccak_table.lookup(
-            is_deposit_tx,
-            is_deposit_tx * RLC(bytes(reversed(value_bytes)), randomness, n_bytes=64).expr(),
-            is_deposit_tx * FQ(64),
-            is_deposit_tx * self.value_hash.expr(),
-            assert_msg,
-        )
-
-        value_hash = keccak(self.l1_block_hash_bytes + self.index_bytes)
-        source_bytes = SourceHashAux.domain_bytes(self.tx_idx) + value_hash
-        keccak_table.lookup(
-            is_deposit_tx,
-            is_deposit_tx * RLC(bytes(reversed(source_bytes)), randomness, n_bytes=64).expr(),
-            is_deposit_tx * FQ(64),
-            is_deposit_tx * self.source_hash.expr(),
-            assert_msg,
-        )
-
 class Witness(NamedTuple):
     rows: List[Row]  # Transaction table rows
     keccak_table: KeccakTable
     sign_verifications: List[SignVerifyChip]
-    source_hashes: List[SourceHashChip]
 
 
 @is_circuit_code
@@ -338,7 +268,6 @@ def verify_circuit(
 
     rows = witness.rows
     sign_verifications = witness.sign_verifications
-    source_hashes = witness.source_hashes
     keccak_table = witness.keccak_table
     for tx_index in range(MAX_TXS):
         assert_msg = f"Constraints failed for tx_index = {tx_index}"
@@ -351,9 +280,6 @@ def verify_circuit(
         # 0 in all values.  The SignVerifyChip skips the verification when
         # the caller_address == 0.
         sign_verifications[tx_index].verify(keccak_table, randomness, assert_msg)
-
-        # Kroma source hash lookup
-        source_hashes[tx_index].verify(keccak_table,randomness, assert_msg)
 
         # 0. Copy constraints using fixed offsets between the tx rows and the SignVerifyChip
         tx_type = rows[tx_type_index].value
@@ -391,7 +317,6 @@ class Transaction(NamedTuple):
     # Needed by deposit tx
     from_: U160
     mint: U256
-    source_hash_aux: SourceHashAux
 
     def is_deposit(self):
         return self.type_ == DEPOSIT_TX_TYPE
@@ -419,17 +344,16 @@ def padding_tx(tx_id: int) -> List[Row]:
         Row(FQ(tx_id), FQ(Tag.TxSignHash), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.Mint), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.RollupDataGasCost), FQ(0), FQ(0)),
-        Row(FQ(tx_id), FQ(Tag.SourceHash), FQ(0), FQ(0)),
     ]
 
 
 def tx2witness(
     index: int, tx: Transaction, chain_id: U64, randomness: FQ, keccak_table: KeccakTable
-) -> Tuple[List[Row], SignVerifyChip, SourceHashChip]:
+) -> Tuple[List[Row], SignVerifyChip]:
     """
     Generate the witness data for a single transaction: generate the tx table
-    rows, insert the pub_key_bytes and source_hash_bytes entry in the keccak_table
-    and assign the SignVerifyChip and SourceHashChip.
+    rows, insert the pub_key_bytes entry in the keccak_table
+    and assign the SignVerifyChip.
     """
 
     tx_sign_data = rlp.encode(
@@ -453,15 +377,6 @@ def tx2witness(
         addr = tx.from_.to_bytes(20, 'big')
 
     sign_verification = SignVerifyChip.assign(sig, pk, tx_sign_hash, tx.is_deposit(), randomness)
-
-    # Kroma
-    tx_source_hash = tx.source_hash_aux.source_hash(index, tx.is_deposit())
-
-    if tx.is_deposit():
-        keccak_table.add(tx.source_hash_aux.value_bytes(), randomness)
-        keccak_table.add(SourceHashAux.domain_bytes(index + 1) + tx.source_hash_aux.value_hash(), randomness)
-
-    source_hash = SourceHashChip.assign(index + 1, FQ(tx.type_), tx.source_hash_aux, randomness)
 
     call_data_gas_cost = sum(
         [
@@ -515,12 +430,10 @@ def tx2witness(
     # Kroma
     rows.append(Row(tx_id, FQ(Tag.Mint), FQ(0), RLC(tx.mint, randomness).expr()))
     rows.append(Row(tx_id, FQ(Tag.RollupDataGasCost), FQ(0), FQ(rollup_data_gas_cost)))
-    source_hash_rlc = RLC(tx_source_hash, randomness).expr()
-    rows.append(Row(tx_id, FQ(Tag.SourceHash), FQ(0), FQ(source_hash_rlc)))
     for byte_index, byte in enumerate(tx.data):
         rows.append(Row(tx_id, FQ(Tag.CallData), FQ(byte_index), FQ(byte)))
 
-    return (rows, sign_verification, source_hash)
+    return (rows, sign_verification)
 
 
 # Dummy signature, public key and message hash that passes verification used to
@@ -549,13 +462,11 @@ def txs2witness(
 
     keccak_table = KeccakTable()
     sign_verifications: List[SignVerifyChip] = []
-    source_hashes: List[SourceHashChip] = []
     tx_fixed_rows: List[Row] = []  # Accumulate fixed rows of each tx
     tx_dyn_rows: List[Row] = []  # Accumulate CallData rows of each tx
     for index, tx in enumerate(txs):
-        tx_rows, sign_verification, source_hash = tx2witness(index, tx, chain_id, randomness, keccak_table)
+        tx_rows, sign_verification = tx2witness(index, tx, chain_id, randomness, keccak_table)
         sign_verifications.append(sign_verification)
-        source_hashes.append(source_hash)
         for row in tx_rows:
             if row.tag == Tag.CallData:
                 tx_dyn_rows.append(row)
@@ -597,17 +508,4 @@ def txs2witness(
     # and dummy ecdsa verification values to disable the verification.
     sign_verifications = sign_verifications + [padding_sign_verification] * (MAX_TXS - len(txs))
 
-    padding_source_hash = SourceHashChip(
-        FQ(0),
-        FQ(0),
-        RLC(0, randomness),
-        RLC(0, randomness),
-        bytes(),
-        bytes(),
-        bytes(),
-    )
-    # Fill the rest of source_hashes with the witnesses assigned to 0s
-    # and dummy source hash values to disable the verification.
-    source_hashes = source_hashes + [padding_source_hash] * (MAX_TXS - len(txs))
-
-    return Witness(rows, keccak_table, sign_verifications, source_hashes)
+    return Witness(rows, keccak_table, sign_verifications)
