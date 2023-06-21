@@ -295,6 +295,11 @@ class TxLogFieldTag(IntEnum):
 
 
 class L1BlockFieldTag(IntEnum):
+    """
+    Tag for RWTable lookup with tag L1Block, which is used to index specific
+    field of L1Block.
+    """
+
     L1BaseFee = auto()
     L1FeeOverhead = auto()
     L1FeeScalar = auto()
