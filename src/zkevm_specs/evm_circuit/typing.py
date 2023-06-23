@@ -19,7 +19,6 @@ from itertools import chain
 import rlp # type: ignore
 
 from ..util import (
-    SourceHashAux,
     U64,
     U160,
     U256,
@@ -153,9 +152,6 @@ class Transaction:
     Kroma
     """
     mint: U256
-    # This is needed to compute source hash.
-    # See https://github.com/kroma-network/kroma/blob/dev/specs/deposits.md#source-hash-computation.
-    source_hash_aux: SourceHashAux
 
     def __init__(
         self,
@@ -171,7 +167,6 @@ class Transaction:
         invalid_tx: int = 0,
         access_list: List[AccessTuple] = list(),
         mint: U256 = U256(0),
-        source_hash_aux: SourceHashAux = SourceHashAux(),
     ) -> None:
         self.id = id
         self.type_ = type_
@@ -186,7 +181,6 @@ class Transaction:
         self.access_list = access_list
         # Kroma
         self.mint = mint
-        self.source_hash_aux = source_hash_aux
 
     @classmethod
     def system_deposit(
@@ -200,7 +194,6 @@ class Transaction:
         l1_fee_overhead: U256 = U256(2100),
         l1_fee_scalar: U256 = U256(1000000),
         reward_ratio: U256 = U256(1000),
-        source_hash_aux: SourceHashAux = SourceHashAux(),
     ) -> Transaction:
         call_data = \
             bytes.fromhex("efc674eb") + \
@@ -238,8 +231,6 @@ class Transaction:
             list(),
             # mint
             U256(0),
-            # source_hash_aux
-            source_hash_aux,
         )
         return tx
 
@@ -253,7 +244,6 @@ class Transaction:
         value: U256 = U256(0),
         call_data: bytes = bytes(),
         mint: U256 = U256(0),
-        source_hash_aux: SourceHashAux = SourceHashAux(),
     ) -> Transaction:
         tx = obj(
             # id
@@ -280,8 +270,6 @@ class Transaction:
             list(),
             # mint
             mint,
-            # source_hash_aux
-            source_hash_aux,
         )
         return tx
 
@@ -312,8 +300,6 @@ class Transaction:
             list(),
             # mint
             U256(0),
-            # source_hash_aux
-            SourceHashAux(),
         )
         return tx
 
@@ -455,12 +441,6 @@ class Transaction:
                 FQ(TxContextFieldTag.RollupDataGasCost),
                 FQ(0),
                 FQ(self.rollup_data_gas_cost()),
-            ),
-            TxTableRow(
-                FQ(self.id),
-                FQ(TxContextFieldTag.SourceHash),
-                FQ(0),
-                RLC(self.source_hash_aux.source_hash(self.id, self.is_deposit()), randomness),
             ),
         ]
 

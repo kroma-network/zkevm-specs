@@ -99,6 +99,7 @@ class FixedTableTag(IntEnum):
         else:
             raise ValueError("Unreacheable")
 
+    @staticmethod
     def range_table_tag(range: int) -> FixedTableTag:
         if range == 5:
             return FixedTableTag.Range5
@@ -166,11 +167,10 @@ class TxContextFieldTag(IntEnum):
     """
     Mint = auto()
     RollupDataGasCost = auto()
-    SourceHash = auto()
 
     @classmethod
-    def fixed_len(obj) -> int:
-        return obj.SourceHash - 1
+    def fixed_len(cls) -> int:
+        return cls.RollupDataGasCost - 1
 
 
 class BytecodeFieldTag(IntEnum):
