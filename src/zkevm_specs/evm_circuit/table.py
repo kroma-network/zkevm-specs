@@ -99,6 +99,7 @@ class FixedTableTag(IntEnum):
         else:
             raise ValueError("Unreacheable")
 
+    @staticmethod
     def range_table_tag(range: int) -> FixedTableTag:
         if range == 5:
             return FixedTableTag.Range5
