@@ -2,6 +2,7 @@ import pytest
 
 from common import rand_fq
 from zkevm_specs.evm_circuit import (
+    AccountFieldTag,
     Block,
     CallContextFieldTag,
     ExecutionState,
@@ -15,6 +16,7 @@ from zkevm_specs.evm_circuit import (
 )
 from zkevm_specs.util import (
     EMPTY_CODE_HASH,
+    MAX_REFUND_QUOTIENT_OF_GAS_USED,
     L1_BASE_FEE,
     L1_FEE_OVERHEAD,
     L1_FEE_SCALAR,
@@ -28,6 +30,7 @@ TESTING_DATA = (
     (
         Transaction.system_deposit(),
         0,
+        0,
         False,
         0,
         True,
@@ -39,6 +42,7 @@ TESTING_DATA = (
             id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
         ),
         994,
+        4800,
         False,
         0,
         False,
@@ -50,6 +54,7 @@ TESTING_DATA = (
             id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000,
         ),
         994,
+        4800,
         False,
         0,
         True,
@@ -61,6 +66,7 @@ TESTING_DATA = (
             id=4, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=65000,
         ),
         3952,
+        38400,
         False,
         100,
         True,
@@ -72,6 +78,7 @@ TESTING_DATA = (
             id=5, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=21000,
         ),
         0,  # gas_left
+        0,  # refund
         True,  # is_last_tx
         20000,  # current_cumulative_gas_used
         True,  # success
@@ -81,11 +88,12 @@ TESTING_DATA = (
 
 
 @pytest.mark.parametrize(
-    "tx, gas_left, is_last_tx, current_cumulative_gas_used, success, l1_fee_data", TESTING_DATA
+    "tx, gas_left, refund, is_last_tx, current_cumulative_gas_used, success, l1_fee_data", TESTING_DATA
 )
 def test_end_deposit_tx(
     tx: Transaction,
     gas_left: int,
+    refund: int,
     is_last_tx: bool,
     current_cumulative_gas_used: int,
     success: bool,
@@ -94,12 +102,17 @@ def test_end_deposit_tx(
     randomness = rand_fq()
 
     block = Block()
+    effective_refund = min(refund, tx.gas // MAX_REFUND_QUOTIENT_OF_GAS_USED)
+    caller_balance_prev = int(1e18) - (tx.value + tx.gas * tx.gas_price)
+    caller_balance = caller_balance_prev + effective_refund * tx.gas_price
 
     rw_dictionary = (
         # fmt: off
         RWDictionary(17)
             .call_context_read(1, CallContextFieldTag.TxId, tx.id)
             .call_context_read(1, CallContextFieldTag.IsPersistent, 1)
+            .tx_refund_read(tx.id, refund)
+            .account_write(tx.caller_address, AccountFieldTag.Balance, RLC(caller_balance, randomness), RLC(caller_balance_prev, randomness))
             .tx_receipt_write(tx.id, TxReceiptFieldTag.PostStateOrStatus, 1 - tx.invalid_tx)
             .tx_receipt_write(tx.id, TxReceiptFieldTag.LogLength, 0)
         # fmt: on
@@ -129,7 +142,7 @@ def test_end_deposit_tx(
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeScalar, RLC(l1_fee_scalar, randomness, 32))
 
     if not is_last_tx:
-        rw_dictionary.call_context_read(25 + 2*is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
+        rw_dictionary.call_context_read(26 + 2*is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
 
     tables = Tables(
         block_table=set(block.table_assignments(randomness)),
@@ -156,7 +169,7 @@ def test_end_deposit_tx(
             ),
             StepState(
                 execution_state=ExecutionState.EndBlock if is_last_tx else ExecutionState.BeginTx,
-                rw_counter=25 + 2*is_first_tx - is_last_tx,
+                rw_counter=26 + 2*is_first_tx - is_last_tx,
                 call_id=1 if is_last_tx else 0,
             ),
         ],
