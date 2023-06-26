@@ -161,9 +161,9 @@ class Instruction:
             assert next in [ExecutionState.BeginTx, ExecutionState.EndBlock]
         elif curr == ExecutionState.EndBlock:
             assert next == ExecutionState.EndBlock
-        elif curr == ExecutionState.BaseFeeHook:
-            assert next == ExecutionState.RollupFeeHook
-        elif curr == ExecutionState.RollupFeeHook:
+        elif curr == ExecutionState.FeeDistributionHook:
+            assert next == ExecutionState.ProposerRewardHook
+        elif curr == ExecutionState.ProposerRewardHook:
             assert next == ExecutionState.EndTx
 
         # Negation ExecutionState transition constraint for rest ones
@@ -172,12 +172,12 @@ class Instruction:
         elif next == ExecutionState.BeginTx:
             assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx]
         elif next == ExecutionState.EndTx:
-            assert curr.halts() or curr == ExecutionState.RollupFeeHook
+            assert curr.halts() or curr == ExecutionState.ProposerRewardHook
         elif next == ExecutionState.EndDepositTx:
             assert curr.halts() or curr == ExecutionState.BeginDepositTx
         elif next == ExecutionState.EndBlock:
             assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx, ExecutionState.EndBlock]
-        elif next == ExecutionState.BaseFeeHook:
+        elif next == ExecutionState.FeeDistributionHook:
             assert curr.halts() or curr == ExecutionState.BeginTx
 
     def constrain_step_state_transition(self, **kwargs: Transition):

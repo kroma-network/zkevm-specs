@@ -221,7 +221,7 @@ def test_begin_tx(tx: Transaction, callee: Account, is_success: bool):
                 rw_counter=1,
             ),
             StepState(
-                execution_state=ExecutionState.BaseFeeHook
+                execution_state=ExecutionState.FeeDistributionHook
                 if callee.code_hash() == EMPTY_CODE_HASH or is_tx_valid == 0
                 else ExecutionState.PUSH,
                 rw_counter=rw_dictionary.rw_counter,

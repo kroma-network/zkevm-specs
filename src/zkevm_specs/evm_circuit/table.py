@@ -303,6 +303,7 @@ class L1BlockFieldTag(IntEnum):
     L1BaseFee = auto()
     L1FeeOverhead = auto()
     L1FeeScalar = auto()
+    ValidatorRewardNumerator = auto()
 
 
 class TxReceiptFieldTag(IntEnum):

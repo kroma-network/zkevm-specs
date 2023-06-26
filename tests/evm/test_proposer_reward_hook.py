@@ -18,7 +18,7 @@ from zkevm_specs.util import (
     L1_BASE_FEE,
     L1_COST_DENOMINATOR,
     L1_FEE_OVERHEAD,
-    L1_FEE_RECIPIENT,
+    PROPOSER_REWARD_VAULT,
     L1_FEE_SCALAR,
     RLC,
 )
@@ -55,7 +55,7 @@ TESTING_DATA = (
 @pytest.mark.parametrize(
     "tx, wrong_fee, wrong_step, success", TESTING_DATA
 )
-def test_rollup_fee_hook(
+def test_proposer_reward_hook(
     tx: Transaction,
     wrong_fee: bool,
     wrong_step: bool,
@@ -81,7 +81,7 @@ def test_rollup_fee_hook(
             .l1_block_read(L1BlockFieldTag.L1BaseFee, RLC(L1_BASE_FEE, randomness, 32))
             .l1_block_read(L1BlockFieldTag.L1FeeOverhead, RLC(L1_FEE_OVERHEAD, randomness, 32))
             .l1_block_read(L1BlockFieldTag.L1FeeScalar, RLC(L1_FEE_SCALAR, randomness, 32))
-            .account_write(L1_FEE_RECIPIENT, AccountFieldTag.Balance, fee, zero_rlc)
+            .account_write(PROPOSER_REWARD_VAULT, AccountFieldTag.Balance, fee, zero_rlc)
         # fmt: on
     )
 
@@ -97,7 +97,7 @@ def test_rollup_fee_hook(
         tables=tables,
         steps=[
             StepState(
-                execution_state=ExecutionState.RollupFeeHook,
+                execution_state=ExecutionState.ProposerRewardHook,
                 rw_counter=17,
                 call_id=1,
                 is_root=True,
