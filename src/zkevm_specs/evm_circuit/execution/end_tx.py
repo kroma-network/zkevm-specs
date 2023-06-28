@@ -31,13 +31,7 @@ def end_tx(instruction: Instruction):
     tx_caller_address = instruction.tx_context_lookup(tx_id, TxContextFieldTag.CallerAddress)
     instruction.add_balance(tx_caller_address, [value])
 
-    # Add gas_used * effective_tip to coinbase's balance
-    base_fee = cast_expr(instruction.block_context_lookup(BlockContextFieldTag.BaseFee), RLC)
-    effective_tip, _ = instruction.sub_word(tx_gas_price, base_fee)
-    reward, carry = instruction.mul_word_by_u64(effective_tip, gas_used)
-    instruction.constrain_zero(carry)
-    coinbase = instruction.block_context_lookup(BlockContextFieldTag.Coinbase)
-    instruction.add_balance(coinbase, [reward])
+    # NOTE(TA): remove tipping to coinbase
 
     # constrain tx status matches with `PostStateOrStatus` of TxReceipt tag in RW
     instruction.constrain_equal(
@@ -76,11 +70,11 @@ def end_tx(instruction: Instruction):
             tx_id.expr() + 1,
         )
         # Do step state transition for rw_counter
-        instruction.constrain_step_state_transition(rw_counter=Transition.delta(10 - is_first_tx))
+        instruction.constrain_step_state_transition(rw_counter=Transition.delta(9 - is_first_tx))
 
     # When to end of block
     if instruction.next.execution_state == ExecutionState.EndBlock:
         # Do step state transition for rw_counter and call_id
         instruction.constrain_step_state_transition(
-            rw_counter=Transition.delta(9 - is_first_tx), call_id=Transition.same()
+            rw_counter=Transition.delta(8 - is_first_tx), call_id=Transition.same()
         )
