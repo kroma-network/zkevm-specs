@@ -20,7 +20,7 @@ from zkevm_specs.util import (
     L1_BASE_FEE,
     VALIDATOR_REWARD_NUMERATOR,
     VALIDATOR_REWARD_DENOMINATOR,
-    RLC
+    RLC,
 )
 
 CALLEE_ADDRESS = 0xFF
@@ -33,7 +33,7 @@ TESTING_DATA = (
         1000,
         False,
         False,
-        True
+        True,
     ),
     (
         Transaction(
@@ -42,7 +42,7 @@ TESTING_DATA = (
         1000,
         False,
         True,
-        False
+        False,
     ),
     (
         Transaction(
@@ -51,13 +51,12 @@ TESTING_DATA = (
         1000,
         True,
         False,
-        False
+        False,
     ),
 )
 
-@pytest.mark.parametrize(
-    "tx, gas_left, wrong_fee_amount, wrong_step, success", TESTING_DATA
-)
+
+@pytest.mark.parametrize("tx, gas_left, wrong_fee_amount, wrong_step, success", TESTING_DATA)
 def test_fee_distribution_hook(
     tx: Transaction,
     gas_left: int,
@@ -66,9 +65,7 @@ def test_fee_distribution_hook(
     success: bool,
 ):
     randomness = rand_fq()
-    block = Block(
-        base_fee=L1_BASE_FEE
-    )
+    block = Block(base_fee=L1_BASE_FEE)
 
     gas_used = tx.gas - gas_left
     total_reward = tx.gas_price * gas_used if not wrong_fee_amount else 10
@@ -113,7 +110,9 @@ def test_fee_distribution_hook(
                 reversible_write_counter=1,
             ),
             StepState(
-                execution_state=ExecutionState.ProposerRewardHook if not wrong_step else ExecutionState.EndTx,
+                execution_state=ExecutionState.ProposerRewardHook
+                if not wrong_step
+                else ExecutionState.EndTx,
                 rw_counter=21,
                 call_id=1,
             ),

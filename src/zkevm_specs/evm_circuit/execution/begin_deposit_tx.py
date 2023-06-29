@@ -1,4 +1,12 @@
-from ...util import DEPOSIT_TX_TYPE, GAS_COST_TX, GAS_COST_CREATION_TX, EMPTY_CODE_HASH, FQ, RLC, cast_expr
+from ...util import (
+    DEPOSIT_TX_TYPE,
+    GAS_COST_TX,
+    GAS_COST_CREATION_TX,
+    EMPTY_CODE_HASH,
+    FQ,
+    RLC,
+    cast_expr,
+)
 from ..execution_state import ExecutionState
 from ..instruction import Instruction, Transition
 from ..precompile import Precompile
@@ -107,7 +115,9 @@ def begin_deposit_tx(instruction: Instruction):
             instruction.constrain_equal(reversion_info.is_persistent, FQ(1))
 
             # Do step state transition
-            instruction.constrain_equal(instruction.next.execution_state, ExecutionState.EndDepositTx)
+            instruction.constrain_equal(
+                instruction.next.execution_state, ExecutionState.EndDepositTx
+            )
             instruction.constrain_step_state_transition(
                 rw_counter=Transition.delta(11), call_id=Transition.to(call_id)
             )

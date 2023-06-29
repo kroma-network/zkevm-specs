@@ -49,7 +49,11 @@ def verify_step(instruction: Instruction):
     if instruction.is_first_step:
         instruction.constrain_in(
             instruction.curr.execution_state,
-            [FQ(ExecutionState.BeginDepositTx), FQ(ExecutionState.BeginTx), FQ(ExecutionState.EndBlock)],
+            [
+                FQ(ExecutionState.BeginDepositTx),
+                FQ(ExecutionState.BeginTx),
+                FQ(ExecutionState.EndBlock),
+            ],
         )
         instruction.constrain_equal(instruction.curr.rw_counter, FQ(1))
 

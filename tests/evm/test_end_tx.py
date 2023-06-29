@@ -13,11 +13,7 @@ from zkevm_specs.evm_circuit import (
     Transaction,
     verify_steps,
 )
-from zkevm_specs.util import (
-    EMPTY_CODE_HASH,
-    MAX_REFUND_QUOTIENT_OF_GAS_USED,
-    RLC
-)
+from zkevm_specs.util import EMPTY_CODE_HASH, MAX_REFUND_QUOTIENT_OF_GAS_USED, RLC
 
 CALLEE_ADDRESS = 0xFF
 

@@ -23,7 +23,18 @@ def sign_tx(sk: keys.PrivateKey, tx: Transaction, chain_id: U64) -> Transaction:
     sig_r = sig.r
     sig_s = sig.s
     return Transaction(
-        tx.type_, tx.nonce, tx.gas_price, tx.gas, tx.to, tx.value, tx.data, sig_v, sig_r, sig_s, tx.from_, tx.mint
+        tx.type_,
+        tx.nonce,
+        tx.gas_price,
+        tx.gas,
+        tx.to,
+        tx.value,
+        tx.data,
+        sig_v,
+        sig_r,
+        sig_s,
+        tx.from_,
+        tx.mint,
     )
 
 
@@ -114,7 +125,9 @@ def gen_system_deposit_tx() -> Transaction:
     data = bytes([1, 2, 3, 4])
     mint = 0
 
-    return Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, SYSTEM_DEPOSIT_TX_CALLER, mint)
+    return Transaction(
+        type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, SYSTEM_DEPOSIT_TX_CALLER, mint
+    )
 
 
 def gen_deposit_tx(from_: int, to: int) -> Transaction:
@@ -176,6 +189,7 @@ def gen_valid_witness() -> Tuple[Witness, U64, int, int]:
 
     witness = txs2witness(txs, chain_id, MAX_TXS, MAX_CALLDATA_BYTES, r)
     return witness, chain_id, MAX_TXS, MAX_CALLDATA_BYTES
+
 
 def gen_valid_witness_with_deposit_tx() -> Tuple[Witness, U64, int, int]:
     MAX_TXS = 5
@@ -249,6 +263,7 @@ def test_bad_sign_hash_copy():
     rows[row_hash_offset].value = FQ(2324)
     witness = Witness(rows, witness.keccak_table, witness.sign_verifications)
     verify(witness, MAX_TXS, MAX_CALLDATA_BYTES, chain_id, r, success=False)
+
 
 def test_deposit_tx():
     witness, chain_id, MAX_TXS, MAX_CALLDATA_BYTES = gen_valid_witness_with_deposit_tx()

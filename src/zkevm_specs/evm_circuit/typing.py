@@ -16,7 +16,7 @@ from typing import (
 )
 from functools import reduce
 from itertools import chain
-import rlp # type: ignore
+import rlp  # type: ignore
 
 from ..util import (
     U64,
@@ -55,7 +55,7 @@ from .table import (
     CopyCircuitRow,
     KeccakTableRow,
     ExpCircuitRow,
-    L1BlockFieldTag
+    L1BlockFieldTag,
 )
 from .opcode import get_push_size, Opcode
 
@@ -195,17 +195,18 @@ class Transaction:
         l1_fee_scalar: U256 = U256(1000000),
         reward_ratio: U256 = U256(1000),
     ) -> Transaction:
-        call_data = \
-            bytes.fromhex("efc674eb") + \
-            number.to_bytes(8, 'big') + \
-            timestamp.to_bytes(8, 'big') + \
-            basefee.to_bytes(32, 'big') + \
-            hash.to_bytes(32, 'big') + \
-            sequence_number.to_bytes(8, 'big') + \
-            batcher_hash.to_bytes(32, 'big') + \
-            l1_fee_overhead.to_bytes(32, 'big') + \
-            l1_fee_scalar.to_bytes(32, 'big') + \
-            reward_ratio.to_bytes(32, 'big')
+        call_data = (
+            bytes.fromhex("efc674eb")
+            + number.to_bytes(8, "big")
+            + timestamp.to_bytes(8, "big")
+            + basefee.to_bytes(32, "big")
+            + hash.to_bytes(32, "big")
+            + sequence_number.to_bytes(8, "big")
+            + batcher_hash.to_bytes(32, "big")
+            + l1_fee_overhead.to_bytes(32, "big")
+            + l1_fee_scalar.to_bytes(32, "big")
+            + reward_ratio.to_bytes(32, "big")
+        )
         tx = obj(
             # id
             1,
@@ -361,7 +362,7 @@ class Transaction:
                 # TODO(chokobole): Support signature.
                 0,
                 0,
-                0
+                0,
             ]
         )
 

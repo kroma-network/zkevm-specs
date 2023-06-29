@@ -196,14 +196,21 @@ class SignVerifyChip:
 
     @classmethod
     def assign(
-        cls, signature: KeyAPI.Signature, pub_key: KeyAPI.PublicKey, msg_hash: bytes, is_deposit_tx: bool, randomness: FQ
+        cls,
+        signature: KeyAPI.Signature,
+        pub_key: KeyAPI.PublicKey,
+        msg_hash: bytes,
+        is_deposit_tx: bool,
+        randomness: FQ,
     ):
         pub_key_hash = keccak(pub_key.to_bytes())
         self_pub_key_hash = RLC(pub_key_hash, randomness)
         self_address = FQ(int.from_bytes(pub_key_hash[-20:], "big"))
         self_msg_hash_rlc = RLC(int.from_bytes(msg_hash, "big"), randomness).expr()
         self_ecdsa_chip = ECDSAVerifyChip.assign(signature, pub_key, msg_hash)
-        return cls(self_pub_key_hash, self_address, self_msg_hash_rlc, is_deposit_tx, self_ecdsa_chip)
+        return cls(
+            self_pub_key_hash, self_address, self_msg_hash_rlc, is_deposit_tx, self_ecdsa_chip
+        )
 
     def verify(self, keccak_table: KeccakTable, randomness: FQ, assert_msg: str):
         is_not_padding = FQ(1 - (self.address == 0))  # 1 - is_zero(self.address)
@@ -249,6 +256,7 @@ class SignVerifyChip:
             # 4. Verify the ECDSA signature
             self.ecdsa_chip.verify(assert_msg)
 
+
 class Witness(NamedTuple):
     rows: List[Row]  # Transaction table rows
     keccak_table: KeccakTable
@@ -283,10 +291,13 @@ def verify_circuit(
 
         # 0. Copy constraints using fixed offsets between the tx rows and the SignVerifyChip
         tx_type = rows[tx_type_index].value
-        caller_address = rows[caller_addr_index].value if tx_type == FQ(DEPOSIT_TX_TYPE) else sign_verifications[tx_index].address
+        caller_address = (
+            rows[caller_addr_index].value
+            if tx_type == FQ(DEPOSIT_TX_TYPE)
+            else sign_verifications[tx_index].address
+        )
         assert rows[caller_addr_index].value == caller_address, (
-            f"{assert_msg}: {hex(rows[caller_addr_index].value.n)} != "
-            + f"{hex(caller_address.n)}"
+            f"{assert_msg}: {hex(rows[caller_addr_index].value.n)} != " + f"{hex(caller_address.n)}"
         )
         assert rows[tx_sign_hash_index].value == sign_verifications[tx_index].msg_hash_rlc, (
             f"{assert_msg}: {hex(rows[tx_sign_hash_index].value.n)} != "
@@ -300,6 +311,7 @@ class Transaction(NamedTuple):
     """
     Ethereum Transaction
     """
+
     type_: U64
     nonce: U64
     gas_price: U256
@@ -373,8 +385,10 @@ def tx2witness(
     else:
         sig = KeyAPI.Signature(vrs=(0, 0, 0))
 
-        pk = KeyAPI.PublicKey(DUMMY_PUBLIC_KEY[0].to_bytes(32, 'big') + DUMMY_PUBLIC_KEY[1].to_bytes(32, 'big'))
-        addr = tx.from_.to_bytes(20, 'big')
+        pk = KeyAPI.PublicKey(
+            DUMMY_PUBLIC_KEY[0].to_bytes(32, "big") + DUMMY_PUBLIC_KEY[1].to_bytes(32, "big")
+        )
+        addr = tx.from_.to_bytes(20, "big")
 
     sign_verification = SignVerifyChip.assign(sig, pk, tx_sign_hash, tx.is_deposit(), randomness)
 
@@ -391,7 +405,7 @@ def tx2witness(
 
     rollup_data_gas_cost = sum(
         [
-             (
+            (
                 GAS_COST_TX_CALL_DATA_PER_ZERO_BYTE
                 if byte == 0
                 else GAS_COST_TX_CALL_DATA_PER_NON_ZERO_BYTE

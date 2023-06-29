@@ -1,7 +1,7 @@
 from ..execution_state import ExecutionState
 from ..instruction import Instruction, Transition
 from ..table import CallContextFieldTag, TxContextFieldTag
-from ...util import DEPOSIT_TX_TYPE, FQ 
+from ...util import DEPOSIT_TX_TYPE, FQ
 
 
 def stop(instruction: Instruction):
@@ -22,19 +22,23 @@ def stop(instruction: Instruction):
         tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId)
         tx_type = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Type)
         is_deposit = instruction.is_equal(tx_type, FQ(DEPOSIT_TX_TYPE))
-        
+
         if is_deposit == FQ(1):
             # Go to EndDepositTx only, when is_root && if tx is a deposit tx
-            is_to_end_deposit_tx = instruction.is_equal(instruction.next.execution_state, ExecutionState.EndDepositTx)
+            is_to_end_deposit_tx = instruction.is_equal(
+                instruction.next.execution_state, ExecutionState.EndDepositTx
+            )
             instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_end_deposit_tx)
         else:
             # Go to FeeDistributionHook only, when is_root && if tx is not a deposit tx
-            is_to_fee_distribution_hook = instruction.is_equal(instruction.next.execution_state, ExecutionState.FeeDistributionHook)
+            is_to_fee_distribution_hook = instruction.is_equal(
+                instruction.next.execution_state, ExecutionState.FeeDistributionHook
+            )
             instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_fee_distribution_hook)
-        
+
         is_persistent = instruction.call_context_lookup(CallContextFieldTag.IsPersistent)
         instruction.constrain_equal(is_persistent, FQ(1))
-        
+
         # Do step state transition
         instruction.constrain_step_state_transition(
             rw_counter=Transition.delta(3),
