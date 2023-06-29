@@ -246,6 +246,7 @@ class Transaction:
         call_data: bytes = bytes(),
         mint: U256 = U256(0),
     ) -> Transaction:
+        assert id > 1
         tx = obj(
             # id
             id,
