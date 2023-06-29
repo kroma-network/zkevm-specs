@@ -28,26 +28,29 @@ CALLEE_WITH_REVERT_BYTECODE = Account(address=CALLEE_ADDRESS, code=REVERT_BYTECO
 TESTING_DATA = (
     # Transfer 1 ether to EOA, successfully
     (
-        Transaction(caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
+        Transaction(id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
         CALLEE_WITH_NOTHING,
         True,
     ),
     # Transfer 1 ether to contract, successfully
     (
-        Transaction(caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
+        Transaction(id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
         CALLEE_WITH_RETURN_BYTECODE,
         True,
     ),
     # Transfer 1 ether to contract, tx reverts
     (
-        Transaction(caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
+        Transaction(id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
         CALLEE_WITH_REVERT_BYTECODE,
         False,
     ),
     # Transfer random ether, successfully
     (
         Transaction(
-            caller_address=rand_address(), callee_address=CALLEE_ADDRESS, value=rand_range(1e20)
+            id=2,
+            caller_address=rand_address(),
+            callee_address=CALLEE_ADDRESS,
+            value=rand_range(1e20),
         ),
         CALLEE_WITH_RETURN_BYTECODE,
         True,
@@ -55,6 +58,7 @@ TESTING_DATA = (
     # Transfer nothing with random gas_price, successfully
     (
         Transaction(
+            id=2,
             caller_address=rand_address(),
             callee_address=CALLEE_ADDRESS,
             gas_price=rand_range(42857142857143),
@@ -65,7 +69,10 @@ TESTING_DATA = (
     # Transfer random ether, tx reverts
     (
         Transaction(
-            caller_address=rand_address(), callee_address=CALLEE_ADDRESS, value=rand_range(1e20)
+            id=2,
+            caller_address=rand_address(),
+            callee_address=CALLEE_ADDRESS,
+            value=rand_range(1e20),
         ),
         CALLEE_WITH_REVERT_BYTECODE,
         False,
@@ -73,6 +80,7 @@ TESTING_DATA = (
     # Transfer nothing with random gas_price, tx reverts
     (
         Transaction(
+            id=2,
             caller_address=rand_address(),
             callee_address=CALLEE_ADDRESS,
             gas_price=rand_range(42857142857143),
@@ -83,6 +91,7 @@ TESTING_DATA = (
     # Transfer nothing with some calldata
     (
         Transaction(
+            id=2,
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=21080,
@@ -94,6 +103,7 @@ TESTING_DATA = (
     # Transfer with wrong nonce
     (
         Transaction(
+            id=2,
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             value=int(1e18),
@@ -106,6 +116,7 @@ TESTING_DATA = (
     # Transfer with insufficient balance
     (
         Transaction(
+            id=2,
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=21080,
@@ -118,6 +129,7 @@ TESTING_DATA = (
     # Transfer with insufficient balance and ignore the revert code
     (
         Transaction(
+            id=2,
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=21080,
@@ -130,6 +142,7 @@ TESTING_DATA = (
     # Transfer with sufficient intrinsic gas
     (
         Transaction(
+            id=2,
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=21080 + 2400 + 1900 * 2,
@@ -143,6 +156,7 @@ TESTING_DATA = (
     # Transfer with insufficient intrinsic gas
     (
         Transaction(
+            id=2,
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=21080,
@@ -235,5 +249,4 @@ def test_begin_tx(tx: Transaction, callee: Account, is_success: bool):
                 reversible_write_counter=2,
             ),
         ],
-        begin_with_first_step=True,
     )

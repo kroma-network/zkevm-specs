@@ -1,4 +1,12 @@
-from ...util import GAS_COST_TX, GAS_COST_CREATION_TX, EMPTY_CODE_HASH, FQ, RLC, cast_expr
+from ...util import (
+    GAS_COST_TX,
+    GAS_COST_CREATION_TX,
+    EMPTY_CODE_HASH,
+    FQ,
+    RLC,
+    cast_expr,
+    DEPOSIT_TX_TYPE,
+)
 from ..execution_state import ExecutionState
 from ..instruction import Instruction, Transition
 from ..precompile import Precompile
@@ -9,14 +17,18 @@ def begin_tx(instruction: Instruction):
     call_id = instruction.curr.rw_counter
 
     tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId, call_id=call_id)
+    tx_type = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Type)
+    is_tx_type = instruction.is_equal(tx_type, FQ(DEPOSIT_TX_TYPE))
+    instruction.constrain_zero(is_tx_type)
+
     reversion_info = instruction.reversion_info(call_id=call_id)
     instruction.constrain_equal(
         instruction.call_context_lookup(CallContextFieldTag.IsSuccess, call_id=call_id),
         reversion_info.is_persistent,
     )
 
-    if instruction.is_first_step:
-        instruction.constrain_equal(tx_id, FQ(1))
+    is_tx_id_one = instruction.is_equal(tx_id, FQ(1))
+    instruction.constrain_zero(is_tx_id_one)
 
     tx_caller_address = instruction.tx_context_lookup(tx_id, TxContextFieldTag.CallerAddress)
     tx_callee_address = instruction.tx_context_lookup(tx_id, TxContextFieldTag.CalleeAddress)
