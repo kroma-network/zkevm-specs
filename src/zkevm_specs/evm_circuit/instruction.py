@@ -156,7 +156,11 @@ class Instruction:
 
         # ExecutionState transition constraint for special ones
         if curr == ExecutionState.EndDepositTx:
-            assert next in [ExecutionState.BeginDepositTx, ExecutionState.BeginTx, ExecutionState.EndBlock]
+            assert next in [
+                ExecutionState.BeginDepositTx,
+                ExecutionState.BeginTx,
+                ExecutionState.EndBlock,
+            ]
         elif curr == ExecutionState.EndTx:
             assert next in [ExecutionState.BeginTx, ExecutionState.EndBlock]
         elif curr == ExecutionState.EndBlock:
@@ -176,7 +180,11 @@ class Instruction:
         elif next == ExecutionState.EndDepositTx:
             assert curr.halts() or curr == ExecutionState.BeginDepositTx
         elif next == ExecutionState.EndBlock:
-            assert curr in [ExecutionState.EndTx, ExecutionState.EndDepositTx, ExecutionState.EndBlock]
+            assert curr in [
+                ExecutionState.EndTx,
+                ExecutionState.EndDepositTx,
+                ExecutionState.EndBlock,
+            ]
         elif next == ExecutionState.FeeDistributionHook:
             assert curr.halts() or curr == ExecutionState.BeginTx
 

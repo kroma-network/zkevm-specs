@@ -18,10 +18,7 @@ from zkevm_specs.evm_circuit import (
     Transaction,
     verify_steps,
 )
-from zkevm_specs.util import (
-    DEPOSIT_TX_TYPE,
-    RLC
-)
+from zkevm_specs.util import DEPOSIT_TX_TYPE, RLC
 
 BYTECODE_END_WITHOUT_STOP = Bytecode().push(0, n_bytes=1)
 BYTECODE_END_WITH_STOP = Bytecode().push(0, n_bytes=1).stop()
@@ -29,10 +26,8 @@ BYTECODE_END_WITH_STOP = Bytecode().push(0, n_bytes=1).stop()
 TESTING_DATA_IS_ROOT = (
     (Transaction(), False, BYTECODE_END_WITHOUT_STOP, True),
     (Transaction(), False, BYTECODE_END_WITH_STOP, True),
-
     (Transaction(type_=DEPOSIT_TX_TYPE), False, BYTECODE_END_WITHOUT_STOP, True),
     (Transaction(type_=DEPOSIT_TX_TYPE), False, BYTECODE_END_WITH_STOP, True),
-
     (Transaction(), True, BYTECODE_END_WITHOUT_STOP, False),
     (Transaction(), True, BYTECODE_END_WITH_STOP, False),
     (Transaction(type_=DEPOSIT_TX_TYPE), True, BYTECODE_END_WITHOUT_STOP, False),
@@ -41,12 +36,7 @@ TESTING_DATA_IS_ROOT = (
 
 
 @pytest.mark.parametrize("tx, wrong_step, bytecode, success", TESTING_DATA_IS_ROOT)
-def test_stop_is_root(
-    tx: Transaction,
-    wrong_step: bool,
-    bytecode: Bytecode,
-    success: bool
-):
+def test_stop_is_root(tx: Transaction, wrong_step: bool, bytecode: Bytecode, success: bool):
     randomness = rand_fq()
 
     block = Block()
@@ -109,9 +99,9 @@ def test_stop_is_root(
                 gas_left=0,
                 reversible_write_counter=2,
             ),
-            next_step
+            next_step,
         ],
-        success=success
+        success=success,
     )
 
 

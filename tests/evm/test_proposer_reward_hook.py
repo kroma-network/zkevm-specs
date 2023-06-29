@@ -28,33 +28,44 @@ CALLEE_ADDRESS = 0xFF
 TESTING_DATA = (
     (
         Transaction(
-            id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
+            id=1,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=27000,
+            gas_price=int(2e9),
         ),
         False,
         False,
-        True
+        True,
     ),
     (
         Transaction(
-            id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=27000,
+            gas_price=int(2e9),
         ),
         False,
         True,
-        False
+        False,
     ),
-        (
+    (
         Transaction(
-            id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
+            id=3,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=27000,
+            gas_price=int(2e9),
         ),
         True,
         False,
-        False
+        False,
     ),
 )
 
-@pytest.mark.parametrize(
-    "tx, wrong_fee, wrong_step, success", TESTING_DATA
-)
+
+@pytest.mark.parametrize("tx, wrong_fee, wrong_step, success", TESTING_DATA)
 def test_proposer_reward_hook(
     tx: Transaction,
     wrong_fee: bool,
@@ -70,7 +81,7 @@ def test_proposer_reward_hook(
     l1_fee_tmp = l1_gas_to_use * L1_BASE_FEE
     l1_fee_tmp2 = l1_fee_tmp * L1_FEE_SCALAR
 
-    fee = int((l1_fee_tmp2 - l1_cost_remainder)/L1_COST_DENOMINATOR) if not wrong_fee else 10
+    fee = int((l1_fee_tmp2 - l1_cost_remainder) / L1_COST_DENOMINATOR) if not wrong_fee else 10
     fee = RLC(fee, randomness, 32)
     zero_rlc = RLC(0, randomness, 32)
 

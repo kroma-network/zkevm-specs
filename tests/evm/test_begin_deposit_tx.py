@@ -37,21 +37,27 @@ TESTING_DATA = (
     # User deposit tx
     # Transfer 1 ether to EOA, successfully
     (
-        Transaction.deposit(id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
+        Transaction.deposit(
+            id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)
+        ),
         CALLEE_WITH_NOTHING,
         True,
         0,
     ),
-     # Transfer 1 ether to contract, successfully
+    # Transfer 1 ether to contract, successfully
     (
-        Transaction.deposit(id = 1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
+        Transaction.deposit(
+            id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)
+        ),
         CALLEE_WITH_RETURN_BYTECODE,
         True,
         0,
     ),
     # Transfer 1 ether to contract, tx reverts
     (
-        Transaction.deposit(id = 1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)),
+        Transaction.deposit(
+            id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, value=int(1e18)
+        ),
         CALLEE_WITH_REVERT_BYTECODE,
         False,
         0,
@@ -59,7 +65,10 @@ TESTING_DATA = (
     # Transfer random ether, successfully
     (
         Transaction.deposit(
-            id = 1, caller_address=rand_address(), callee_address=CALLEE_ADDRESS, value=rand_range(1e20)
+            id=1,
+            caller_address=rand_address(),
+            callee_address=CALLEE_ADDRESS,
+            value=rand_range(1e20),
         ),
         CALLEE_WITH_RETURN_BYTECODE,
         True,
@@ -68,7 +77,10 @@ TESTING_DATA = (
     # Transfer random ether, tx reverts
     (
         Transaction.deposit(
-            id = 1, caller_address=rand_address(), callee_address=CALLEE_ADDRESS, value=rand_range(1e20)
+            id=1,
+            caller_address=rand_address(),
+            callee_address=CALLEE_ADDRESS,
+            value=rand_range(1e20),
         ),
         CALLEE_WITH_REVERT_BYTECODE,
         False,
@@ -77,7 +89,7 @@ TESTING_DATA = (
     # Transfer nothing with some calldata
     (
         Transaction.deposit(
-            id = 1,
+            id=1,
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=21080,

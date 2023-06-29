@@ -21,7 +21,7 @@ from zkevm_specs.util import (
     L1_FEE_OVERHEAD,
     L1_FEE_SCALAR,
     VALIDATOR_REWARD_NUMERATOR,
-    RLC
+    RLC,
 )
 
 CALLEE_ADDRESS = 0xFF
@@ -40,7 +40,11 @@ TESTING_DATA = (
     # Not a deposit transaction
     (
         Transaction(
-            id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9),
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=27000,
+            gas_price=int(2e9),
         ),
         994,
         4800,
@@ -52,7 +56,10 @@ TESTING_DATA = (
     # Tx with non-capped refund
     (
         Transaction.deposit(
-            id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000,
+            id=3,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=27000,
         ),
         994,
         4800,
@@ -64,7 +71,10 @@ TESTING_DATA = (
     # Tx with capped refund
     (
         Transaction.deposit(
-            id=4, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=65000,
+            id=4,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
         ),
         3952,
         38400,
@@ -76,7 +86,10 @@ TESTING_DATA = (
     # Last tx
     (
         Transaction.deposit(
-            id=5, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=21000,
+            id=5,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=21000,
         ),
         0,  # gas_left
         0,  # refund
@@ -89,7 +102,8 @@ TESTING_DATA = (
 
 
 @pytest.mark.parametrize(
-    "tx, gas_left, refund, is_last_tx, current_cumulative_gas_used, success, l1_fee_data", TESTING_DATA
+    "tx, gas_left, refund, is_last_tx, current_cumulative_gas_used, success, l1_fee_data",
+    TESTING_DATA,
 )
 def test_end_deposit_tx(
     tx: Transaction,
@@ -98,7 +112,7 @@ def test_end_deposit_tx(
     is_last_tx: bool,
     current_cumulative_gas_used: int,
     success: bool,
-    l1_fee_data: tuple
+    l1_fee_data: tuple,
 ):
     randomness = rand_fq()
 
@@ -139,12 +153,16 @@ def test_end_deposit_tx(
     if is_first_tx:
         l1_base_fee, l1_fee_overhead, l1_fee_scalar, validator_reward_numerator = l1_fee_data
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1BaseFee, RLC(l1_base_fee, randomness))
-        rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeOverhead, RLC(l1_fee_overhead, randomness))
+        rw_dictionary.l1_block_write(
+            L1BlockFieldTag.L1FeeOverhead, RLC(l1_fee_overhead, randomness)
+        )
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeScalar, RLC(l1_fee_scalar, randomness))
-        rw_dictionary.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator, RLC(validator_reward_numerator, randomness))
+        rw_dictionary.l1_block_write(
+            L1BlockFieldTag.ValidatorRewardNumerator, RLC(validator_reward_numerator, randomness)
+        )
 
     if not is_last_tx:
-        rw_dictionary.call_context_read(26 + 3*is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
+        rw_dictionary.call_context_read(26 + 3 * is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
 
     tables = Tables(
         block_table=set(block.table_assignments(randomness)),
@@ -171,7 +189,7 @@ def test_end_deposit_tx(
             ),
             StepState(
                 execution_state=ExecutionState.EndBlock if is_last_tx else ExecutionState.BeginTx,
-                rw_counter=26 + 3*is_first_tx - is_last_tx,
+                rw_counter=26 + 3 * is_first_tx - is_last_tx,
                 call_id=1 if is_last_tx else 0,
             ),
         ],

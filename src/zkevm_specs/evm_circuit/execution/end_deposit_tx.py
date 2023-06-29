@@ -3,6 +3,7 @@ from ..execution_state import ExecutionState
 from ..instruction import Instruction, Transition
 from ..table import L1BlockFieldTag, CallContextFieldTag, TxContextFieldTag, TxReceiptFieldTag
 
+
 def end_deposit_tx(instruction: Instruction):
     tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId)
     is_persistent = instruction.call_context_lookup(CallContextFieldTag.IsPersistent)
@@ -21,9 +22,7 @@ def end_deposit_tx(instruction: Instruction):
 
     # Add effective_refund * gas_price back to caller's balance
     tx_gas_price = instruction.tx_gas_price(tx_id)
-    value, carry = instruction.mul_word_by_u64(
-        tx_gas_price, effective_refund
-    )
+    value, carry = instruction.mul_word_by_u64(tx_gas_price, effective_refund)
     instruction.constrain_zero(carry)
     tx_caller_address = instruction.tx_context_lookup(tx_id, TxContextFieldTag.CallerAddress)
     instruction.add_balance(tx_caller_address, [value])
@@ -79,7 +78,9 @@ def end_deposit_tx(instruction: Instruction):
         # + instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
         # + instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
         # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
-        instruction.constrain_step_state_transition(rw_counter=Transition.delta(9 + 3*is_first_tx))
+        instruction.constrain_step_state_transition(
+            rw_counter=Transition.delta(9 + 3 * is_first_tx)
+        )
 
     # When to end of block
     if instruction.next.execution_state == ExecutionState.EndBlock:
@@ -91,5 +92,5 @@ def end_deposit_tx(instruction: Instruction):
         # + instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
         # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
         instruction.constrain_step_state_transition(
-            rw_counter=Transition.delta(8 + 3*is_first_tx), call_id=Transition.same()
+            rw_counter=Transition.delta(8 + 3 * is_first_tx), call_id=Transition.same()
         )
