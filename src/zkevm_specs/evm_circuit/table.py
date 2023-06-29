@@ -166,6 +166,7 @@ class TxContextFieldTag(IntEnum):
     Kroma
     """
     Mint = auto()
+    SourceHash = auto()
     RollupDataGasCost = auto()
 
     @classmethod

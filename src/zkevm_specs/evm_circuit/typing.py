@@ -152,6 +152,7 @@ class Transaction:
     Kroma
     """
     mint: U256
+    source_hash: U256
 
     def __init__(
         self,
@@ -167,6 +168,7 @@ class Transaction:
         invalid_tx: int = 0,
         access_list: List[AccessTuple] = list(),
         mint: U256 = U256(0),
+        source_hash: U256 = U256(0),
     ) -> None:
         self.id = id
         self.type_ = type_
@@ -181,6 +183,7 @@ class Transaction:
         self.access_list = access_list
         # Kroma
         self.mint = mint
+        self.source_hash = source_hash
 
     @classmethod
     def system_deposit(
@@ -232,6 +235,11 @@ class Transaction:
             list(),
             # mint
             U256(0),
+            # source_hash
+            keccak256(
+                U256(1).to_bytes(32, "big")
+                + keccak256(hash.to_bytes(32, "big") + sequence_number.to_bytes(32, "big"))
+            ),
         )
         return tx
 
@@ -245,8 +253,10 @@ class Transaction:
         value: U256 = U256(0),
         call_data: bytes = bytes(),
         mint: U256 = U256(0),
+        source_hash: U256 = U256(0),
     ) -> Transaction:
         assert id > 1
+        hash = call_data[48:80]
         tx = obj(
             # id
             id,
@@ -272,6 +282,8 @@ class Transaction:
             list(),
             # mint
             mint,
+            # source_hash
+            source_hash,
         )
         return tx
 
@@ -301,6 +313,8 @@ class Transaction:
             # access_list
             list(),
             # mint
+            U256(0),
+            # source_hash
             U256(0),
         )
         return tx
@@ -437,6 +451,12 @@ class Transaction:
                 FQ(TxContextFieldTag.Mint),
                 FQ(0),
                 FQ(self.mint),
+            ),
+            TxTableRow(
+                FQ(self.id),
+                FQ(TxContextFieldTag.SourceHash),
+                FQ(0),
+                RLC(self.source_hash, randomness),
             ),
             TxTableRow(
                 FQ(self.id),
