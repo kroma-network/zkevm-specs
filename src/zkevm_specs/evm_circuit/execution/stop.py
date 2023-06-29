@@ -28,9 +28,9 @@ def stop(instruction: Instruction):
             is_to_end_deposit_tx = instruction.is_equal(instruction.next.execution_state, ExecutionState.EndDepositTx)
             instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_end_deposit_tx)
         else:
-            # Go to BaseFeeHook only, when is_root && if tx is not a deposit tx
-            is_to_base_fee_hook = instruction.is_equal(instruction.next.execution_state, ExecutionState.BaseFeeHook)
-            instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_base_fee_hook)
+            # Go to FeeDistributionHook only, when is_root && if tx is not a deposit tx
+            is_to_fee_distribution_hook = instruction.is_equal(instruction.next.execution_state, ExecutionState.FeeDistributionHook)
+            instruction.constrain_equal(FQ(instruction.curr.is_root), is_to_fee_distribution_hook)
         
         is_persistent = instruction.call_context_lookup(CallContextFieldTag.IsPersistent)
         instruction.constrain_equal(is_persistent, FQ(1))

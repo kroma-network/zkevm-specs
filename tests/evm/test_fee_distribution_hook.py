@@ -6,6 +6,7 @@ from zkevm_specs.evm_circuit import (
     Block,
     CallContextFieldTag,
     ExecutionState,
+    L1BlockFieldTag,
     RWDictionary,
     StepState,
     Tables,
@@ -13,9 +14,12 @@ from zkevm_specs.evm_circuit import (
     verify_steps,
 )
 from zkevm_specs.util import (
-    BASE_FEE_RECIPIENT,
     EMPTY_CODE_HASH,
+    PROTOCOL_VAULT,
+    VALIDATOR_REWARD_VAULT,
     L1_BASE_FEE,
+    VALIDATOR_REWARD_NUMERATOR,
+    VALIDATOR_REWARD_DENOMINATOR,
     RLC
 )
 
@@ -54,7 +58,7 @@ TESTING_DATA = (
 @pytest.mark.parametrize(
     "tx, gas_left, wrong_fee_amount, wrong_step, success", TESTING_DATA
 )
-def test_base_fee_hook(
+def test_fee_distribution_hook(
     tx: Transaction,
     gas_left: int,
     wrong_fee_amount: bool,
@@ -67,15 +71,21 @@ def test_base_fee_hook(
     )
 
     gas_used = tx.gas - gas_left
-    mul_base_fee_by_gas_used = block.base_fee * gas_used if not wrong_fee_amount else 10
-    mul_base_fee_by_gas_used = RLC(mul_base_fee_by_gas_used, randomness, 32)
-    zero_rlc = RLC(0, randomness, 32)
+    total_reward = tx.gas_price * gas_used if not wrong_fee_amount else 10
+    zero_rlc = RLC(0, randomness)
+
+    validator_reward = total_reward * VALIDATOR_REWARD_NUMERATOR // VALIDATOR_REWARD_DENOMINATOR
+    protocol_margin = total_reward - validator_reward
+    validator_reward = RLC(validator_reward, randomness)
+    protocol_margin = RLC(protocol_margin, randomness)
 
     rw_dictionary = (
         # fmt: off
         RWDictionary(17)
             .call_context_read(1, CallContextFieldTag.TxId, tx.id)
-            .account_write(BASE_FEE_RECIPIENT, AccountFieldTag.Balance, mul_base_fee_by_gas_used, zero_rlc)
+            .l1_block_read(L1BlockFieldTag.ValidatorRewardNumerator, RLC(VALIDATOR_REWARD_NUMERATOR, randomness))
+            .account_write(PROTOCOL_VAULT, AccountFieldTag.Balance, protocol_margin, zero_rlc)
+            .account_write(VALIDATOR_REWARD_VAULT, AccountFieldTag.Balance, validator_reward, zero_rlc)
         # fmt: on
     )
 
@@ -91,7 +101,7 @@ def test_base_fee_hook(
         tables=tables,
         steps=[
             StepState(
-                execution_state=ExecutionState.BaseFeeHook,
+                execution_state=ExecutionState.FeeDistributionHook,
                 rw_counter=17,
                 call_id=1,
                 is_root=True,
@@ -103,8 +113,8 @@ def test_base_fee_hook(
                 reversible_write_counter=1,
             ),
             StepState(
-                execution_state=ExecutionState.RollupFeeHook if not wrong_step else ExecutionState.EndTx,
-                rw_counter=19,
+                execution_state=ExecutionState.ProposerRewardHook if not wrong_step else ExecutionState.EndTx,
+                rw_counter=21,
                 call_id=1,
             ),
         ],

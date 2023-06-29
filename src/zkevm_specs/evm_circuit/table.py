@@ -189,7 +189,7 @@ class RW(IntEnum):
 
 class RWTableTag(IntEnum):
     """
-    Tag for RWTable lookup, where the RWTable an advice-column table built by
+    Tag for RWTable lookup, where the RWTable is an advice-column table built by
     prover, which will be part of State circuit and each unit read-write data
     will be verified to be consistent between each write.
     """
@@ -295,9 +295,15 @@ class TxLogFieldTag(IntEnum):
 
 
 class L1BlockFieldTag(IntEnum):
+    """
+    Tag for RWTable lookup with tag L1Block, which is used to index specific
+    field of L1Block.
+    """
+
     L1BaseFee = auto()
     L1FeeOverhead = auto()
     L1FeeScalar = auto()
+    ValidatorRewardNumerator = auto()
 
 
 class TxReceiptFieldTag(IntEnum):

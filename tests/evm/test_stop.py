@@ -88,7 +88,7 @@ def test_stop_is_root(
         )
     else:
         next_step = StepState(
-            execution_state=ExecutionState.BaseFeeHook,
+            execution_state=ExecutionState.FeeDistributionHook,
             rw_counter=27,
             call_id=1,
         )
