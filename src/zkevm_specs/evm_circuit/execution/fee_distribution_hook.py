@@ -18,6 +18,13 @@ def fee_distribution_hook(instruction: Instruction):
     tx_gas = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Gas)
     validator_reward_numerator = instruction.l1_block_read(L1BlockFieldTag.ValidatorRewardNumerator)
     zero = instruction.rlc_encode(0, N_BYTES_WORD)
+    """
+    NOTE(TA): You might think that we should have a constraint as implemented in the zkevm-circuits code:
+    check that zero is zero.
+
+    However, we do not need constraints here because:
+    we are using constant 0 itself.
+    """
 
     tx_gas_price = instruction.tx_gas_price(tx_id)
     gas_used = tx_gas.expr() - instruction.curr.gas_left.expr()

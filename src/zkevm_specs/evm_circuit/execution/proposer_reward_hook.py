@@ -22,6 +22,13 @@ def proposer_reward_hook(instruction: Instruction):
         instruction.tx_context_lookup(tx_id, TxContextFieldTag.RollupDataGasCost), 32
     )
     zero = instruction.rlc_encode(0, N_BYTES_WORD)
+    """
+    NOTE(TA): You might think that we should have a constraint as implemented in the zkevm-circuits code:
+    check that zero is zero.
+
+    However, we do not need constraints here because:
+    we are using constant 0 itself.
+    """
 
     l1_gas_to_use, _ = instruction.add_words([tx_rollup_data_gas_cost, l1_fee_overhead])
     l1_fee_tmp = instruction.rlc_encode(

@@ -103,8 +103,6 @@ def test_end_tx(
     effective_refund = min(refund, (tx.gas - gas_left) // MAX_REFUND_QUOTIENT_OF_GAS_USED)
     caller_balance_prev = int(1e18) - (tx.value + tx.gas * tx.gas_price)
     caller_balance = caller_balance_prev + (gas_left + effective_refund) * tx.gas_price
-    coinbase_balance_prev = 0
-    coinbase_balance = coinbase_balance_prev + (tx.gas - gas_left) * (tx.gas_price - block.base_fee)
 
     rw_dictionary = (
         # fmt: off
@@ -113,7 +111,6 @@ def test_end_tx(
             .call_context_read(1, CallContextFieldTag.IsPersistent, 1)
             .tx_refund_read(tx.id, refund)
             .account_write(tx.caller_address, AccountFieldTag.Balance, RLC(caller_balance, randomness), RLC(caller_balance_prev, randomness))
-            .account_write(block.coinbase, AccountFieldTag.Balance, RLC(coinbase_balance, randomness), RLC(coinbase_balance_prev, randomness))
             .tx_receipt_write(tx.id, TxReceiptFieldTag.PostStateOrStatus, 1 - tx.invalid_tx)
             .tx_receipt_write(tx.id, TxReceiptFieldTag.LogLength, 0)
         # fmt: on
@@ -137,7 +134,7 @@ def test_end_tx(
         )
 
     if not is_last_tx:
-        rw_dictionary.call_context_read(27 - is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
+        rw_dictionary.call_context_read(26 - is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
 
     tables = Tables(
         block_table=set(block.table_assignments(randomness)),
@@ -164,7 +161,7 @@ def test_end_tx(
             ),
             StepState(
                 execution_state=ExecutionState.EndBlock if is_last_tx else ExecutionState.BeginTx,
-                rw_counter=27 - is_first_tx - is_last_tx,
+                rw_counter=26 - is_first_tx - is_last_tx,
                 call_id=1 if is_last_tx else 0,
             ),
         ],
