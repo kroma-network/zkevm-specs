@@ -35,6 +35,7 @@ def sign_tx(sk: keys.PrivateKey, tx: Transaction, chain_id: U64) -> Transaction:
         sig_s,
         tx.from_,
         tx.mint,
+        tx.source_hash,
     )
 
 
@@ -105,8 +106,11 @@ def test_tx2witness():
     data = bytes([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99])
     from_ = 0
     mint = 0
+    source_hash = 0
 
-    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, from_, mint)
+    tx = Transaction(
+        type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, from_, mint, source_hash
+    )
     tx = sign_tx(sk, tx, chain_id)
     keccak_table = KeccakTable()
     rows, _ = tx2witness(0, tx, chain_id, r, keccak_table)
@@ -124,9 +128,22 @@ def gen_system_deposit_tx() -> Transaction:
     value = 0
     data = bytes([1, 2, 3, 4])
     mint = 0
+    source_hash = 0
 
     return Transaction(
-        type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, SYSTEM_DEPOSIT_TX_CALLER, mint
+        type_,
+        nonce,
+        gas_price,
+        gas,
+        to,
+        value,
+        data,
+        0,
+        0,
+        0,
+        SYSTEM_DEPOSIT_TX_CALLER,
+        mint,
+        source_hash,
     )
 
 
@@ -138,8 +155,11 @@ def gen_deposit_tx(from_: int, to: int) -> Transaction:
     value = 0
     data = bytes([1, 2, 3, 4])
     mint = 0
+    source_hash = 0
 
-    return Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, from_, mint)
+    return Transaction(
+        type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, from_, mint, source_hash
+    )
 
 
 def gen_tx(i: int, sk: keys.PrivateKey, to: int, chain_id) -> Transaction:
@@ -150,8 +170,9 @@ def gen_tx(i: int, sk: keys.PrivateKey, to: int, chain_id) -> Transaction:
     value = 0x30000 + i * 4
     data = bytes([i] * i)
     mint = 0
+    source_hash = 0
 
-    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, 0, mint)
+    tx = Transaction(type_, nonce, gas_price, gas, to, value, data, 0, 0, 0, 0, mint, source_hash)
     tx = sign_tx(sk, tx, chain_id)
     return tx
 

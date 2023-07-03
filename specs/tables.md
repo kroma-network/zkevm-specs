@@ -25,6 +25,7 @@ Proved by the tx circuit.
 | $TxID  | AccessListGasCost   | 0          | $value  |
 | $TxID  | TxSignHash          | 0          | $value  |
 | $TxID  | Mint                | 0          | $value  |
+| $TxID  | SourceHash          | 0          | $value  |
 | $TxID  | RollupDataGasCost   | 0          | $value  |
 | $TxID  | CallData            | $ByteIndex | $value  |
 | $TxID  | Pad                 | 0          | $value  |
@@ -34,6 +35,7 @@ NOTE:
 - `TxInvalid` is a flag to tell the circuit which tx is invalid and should not be executed. We check `balance`, `nonce`, and `intrinsic gas` within `begin_tx`, `end_tx`, and `end_block` steps to make sure all txs being processed are valid, and all others are invalid and not executed. Invalid transactions go from the `begin_tx` state directly to the `end_tx` state and do not have any side effects.
 - `AccessListGasCost` is the `accessList` gas cost of the tx, which equals to `sum([G_accesslistaddress + G_accessliststorage * len(TA[j]) for j in len(TA)])` (EIP 2930).
 - `Mint` is the amount of ETH deposited from L1 to L2 (in units of Wei).
+- `SourceHash` uniquely identifies the origin of the deposit. See [source hash computation](https://github.com/kroma-network/kroma/blob/dev/specs/deposits.md#source-hash-computation) for the calculation.
 - `RollupDataGasCost` is the gas cost required to roll up a transaction.
 
 ## `rw_table`

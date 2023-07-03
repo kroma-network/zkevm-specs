@@ -329,6 +329,7 @@ class Transaction(NamedTuple):
     # Needed by deposit tx
     from_: U160
     mint: U256
+    source_hash: U256
 
     def is_deposit(self):
         return self.type_ == DEPOSIT_TX_TYPE
@@ -355,6 +356,7 @@ def padding_tx(tx_id: int) -> List[Row]:
         Row(FQ(tx_id), FQ(Tag.AccessListGasCost), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.TxSignHash), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.Mint), FQ(0), FQ(0)),
+        Row(FQ(tx_id), FQ(Tag.SourceHash), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.RollupDataGasCost), FQ(0), FQ(0)),
     ]
 
@@ -443,6 +445,7 @@ def tx2witness(
     rows.append(Row(tx_id, FQ(Tag.TxSignHash), FQ(0), tx_sign_hash_rlc))
     # Kroma
     rows.append(Row(tx_id, FQ(Tag.Mint), FQ(0), RLC(tx.mint, randomness).expr()))
+    rows.append(Row(tx_id, FQ(Tag.SourceHash), FQ(0), RLC(tx.source_hash, randomness).expr()))
     rows.append(Row(tx_id, FQ(Tag.RollupDataGasCost), FQ(0), FQ(rollup_data_gas_cost)))
     for byte_index, byte in enumerate(tx.data):
         rows.append(Row(tx_id, FQ(Tag.CallData), FQ(byte_index), FQ(byte)))
