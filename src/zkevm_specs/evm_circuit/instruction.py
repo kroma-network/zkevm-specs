@@ -27,7 +27,6 @@ from .table import (
     BytecodeFieldTag,
     CallContextFieldTag,
     FixedTableRow,
-    L1BlockFieldTag,
     RWTableRow,
     Tables,
     FixedTableTag,
@@ -696,28 +695,6 @@ class Instruction:
             key2=FQ(0),
             key3=FQ(field_tag),
             key4=FQ(0),
-        ).value
-        return value
-
-    def l1_block_write(
-        self,
-        field_tag: L1BlockFieldTag,
-    ) -> Expression:
-        value = self.rw_lookup(
-            RW.Write,
-            RWTableTag.L1Block,
-            key3=FQ(field_tag),
-        ).value
-        return value
-
-    def l1_block_read(
-        self,
-        field_tag: L1BlockFieldTag,
-    ) -> Expression:
-        value = self.rw_lookup(
-            RW.Read,
-            RWTableTag.L1Block,
-            key3=FQ(field_tag),
         ).value
         return value
 

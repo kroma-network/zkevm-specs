@@ -1,22 +1,22 @@
 from ..instruction import Instruction, Transition
 from ..table import (
     CallContextFieldTag,
-    L1BlockFieldTag,
     TxContextFieldTag,
 )
 from ...util import (
     FQ,
+    RLC,
     N_BYTES_WORD,
     L1_COST_DENOMINATOR,
+    L1_BASE_FEE,
+    L1_FEE_OVERHEAD,
+    L1_FEE_SCALAR,
     PROPOSER_REWARD_VAULT,
 )
 
 
 def proposer_reward_hook(instruction: Instruction):
     tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId)
-    l1_base_fee = instruction.l1_block_read(L1BlockFieldTag.L1BaseFee)
-    l1_fee_overhead = instruction.l1_block_read(L1BlockFieldTag.L1FeeOverhead)
-    l1_fee_scalar = instruction.l1_block_read(L1BlockFieldTag.L1FeeScalar)
     tx_rollup_data_gas_cost = instruction.rlc_encode(
         instruction.tx_context_lookup(tx_id, TxContextFieldTag.RollupDataGasCost), 32
     )
@@ -29,16 +29,12 @@ def proposer_reward_hook(instruction: Instruction):
     we are using constant 0 itself.
     """
 
-    l1_gas_to_use, _ = instruction.add_words([tx_rollup_data_gas_cost, l1_fee_overhead])
-    l1_fee_tmp = instruction.rlc_encode(
-        l1_gas_to_use.int_value * l1_base_fee.int_value, N_BYTES_WORD
-    )
-    instruction.mul_add_words(l1_gas_to_use, l1_base_fee, zero, l1_fee_tmp)
+    l1_gas_to_use, _ = instruction.add_words([tx_rollup_data_gas_cost, RLC(L1_FEE_OVERHEAD)])
+    l1_fee_tmp = instruction.rlc_encode(l1_gas_to_use.int_value * L1_BASE_FEE, N_BYTES_WORD)
+    instruction.mul_add_words(l1_gas_to_use, RLC(L1_BASE_FEE), zero, l1_fee_tmp)
 
-    l1_fee_tmp2 = instruction.rlc_encode(
-        l1_fee_tmp.int_value * l1_fee_scalar.int_value, N_BYTES_WORD
-    )
-    instruction.mul_add_words(l1_fee_tmp, l1_fee_scalar, zero, l1_fee_tmp2)
+    l1_fee_tmp2 = instruction.rlc_encode(l1_fee_tmp.int_value * L1_FEE_SCALAR, N_BYTES_WORD)
+    instruction.mul_add_words(l1_fee_tmp, RLC(L1_FEE_SCALAR), zero, l1_fee_tmp2)
 
     l1_fee, l1_cost_remainder = divmod(l1_fee_tmp2.int_value, L1_COST_DENOMINATOR)
     l1_fee_rlc = instruction.rlc_encode(l1_fee, N_BYTES_WORD)
@@ -58,4 +54,4 @@ def proposer_reward_hook(instruction: Instruction):
     """
 
     instruction.add_balance(FQ(PROPOSER_REWARD_VAULT), [l1_fee_rlc])
-    instruction.constrain_step_state_transition(rw_counter=Transition.delta(5))
+    instruction.constrain_step_state_transition(rw_counter=Transition.delta(2))

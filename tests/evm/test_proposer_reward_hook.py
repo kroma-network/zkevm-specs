@@ -6,7 +6,6 @@ from zkevm_specs.evm_circuit import (
     Block,
     CallContextFieldTag,
     ExecutionState,
-    L1BlockFieldTag,
     RWDictionary,
     StepState,
     Tables,
@@ -89,9 +88,6 @@ def test_proposer_reward_hook(
         # fmt: off
         RWDictionary(17)
             .call_context_read(1, CallContextFieldTag.TxId, tx.id)
-            .l1_block_read(L1BlockFieldTag.L1BaseFee, RLC(L1_BASE_FEE, randomness, 32))
-            .l1_block_read(L1BlockFieldTag.L1FeeOverhead, RLC(L1_FEE_OVERHEAD, randomness, 32))
-            .l1_block_read(L1BlockFieldTag.L1FeeScalar, RLC(L1_FEE_SCALAR, randomness, 32))
             .account_write(PROPOSER_REWARD_VAULT, AccountFieldTag.Balance, fee, zero_rlc)
         # fmt: on
     )
@@ -120,7 +116,7 @@ def test_proposer_reward_hook(
             ),
             StepState(
                 execution_state=ExecutionState.EndTx if not wrong_step else ExecutionState.BeginTx,
-                rw_counter=22,
+                rw_counter=19,
                 call_id=1,
             ),
         ],

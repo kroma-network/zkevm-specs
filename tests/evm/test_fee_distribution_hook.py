@@ -6,7 +6,6 @@ from zkevm_specs.evm_circuit import (
     Block,
     CallContextFieldTag,
     ExecutionState,
-    L1BlockFieldTag,
     RWDictionary,
     StepState,
     Tables,
@@ -80,7 +79,6 @@ def test_fee_distribution_hook(
         # fmt: off
         RWDictionary(17)
             .call_context_read(1, CallContextFieldTag.TxId, tx.id)
-            .l1_block_read(L1BlockFieldTag.ValidatorRewardScalar, RLC(VALIDATOR_REWARD_SCALAR, randomness))
             .account_write(PROTOCOL_VAULT, AccountFieldTag.Balance, protocol_margin, zero_rlc)
             .account_write(VALIDATOR_REWARD_VAULT, AccountFieldTag.Balance, validator_reward, zero_rlc)
         # fmt: on
@@ -113,7 +111,7 @@ def test_fee_distribution_hook(
                 execution_state=ExecutionState.ProposerRewardHook
                 if not wrong_step
                 else ExecutionState.EndTx,
-                rw_counter=21,
+                rw_counter=20,
                 call_id=1,
             ),
         ],

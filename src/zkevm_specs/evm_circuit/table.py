@@ -295,18 +295,6 @@ class TxLogFieldTag(IntEnum):
     DataLength = auto()  # how many bytes read from memory, For RLP encoding
 
 
-class L1BlockFieldTag(IntEnum):
-    """
-    Tag for RWTable lookup with tag L1Block, which is used to index specific
-    field of L1Block.
-    """
-
-    L1BaseFee = auto()
-    L1FeeOverhead = auto()
-    L1FeeScalar = auto()
-    ValidatorRewardScalar = auto()
-
-
 class TxReceiptFieldTag(IntEnum):
     """
     Tag for RWTable lookup with tag TxReceipt, which is used to index specific
