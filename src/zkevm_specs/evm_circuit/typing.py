@@ -196,7 +196,7 @@ class Transaction:
         batcher_hash: U256 = U256(0),
         l1_fee_overhead: U256 = U256(2100),
         l1_fee_scalar: U256 = U256(1000000),
-        reward_ratio: U256 = U256(1000),
+        reward_scalar: U256 = U256(1000),
     ) -> Transaction:
         call_data = (
             bytes.fromhex("efc674eb")
@@ -208,7 +208,7 @@ class Transaction:
             + batcher_hash.to_bytes(32, "big")
             + l1_fee_overhead.to_bytes(32, "big")
             + l1_fee_scalar.to_bytes(32, "big")
-            + reward_ratio.to_bytes(32, "big")
+            + reward_scalar.to_bytes(32, "big")
         )
         tx = obj(
             # id

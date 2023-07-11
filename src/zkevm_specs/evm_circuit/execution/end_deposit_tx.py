@@ -60,7 +60,7 @@ def end_deposit_tx(instruction: Instruction):
         instruction.l1_block_write(L1BlockFieldTag.L1BaseFee)
         instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
         instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
-        instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
+        instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardScalar)
 
     # When to next transaction
     if instruction.next.execution_state == ExecutionState.BeginTx:
@@ -77,7 +77,7 @@ def end_deposit_tx(instruction: Instruction):
         # + instruction.l1_block_write(L1BlockFieldTag.L1BaseFee)
         # + instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
         # + instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
-        # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
+        # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardScalar)
         instruction.constrain_step_state_transition(
             rw_counter=Transition.delta(9 + 3 * is_first_tx)
         )
@@ -90,7 +90,7 @@ def end_deposit_tx(instruction: Instruction):
         # + instruction.l1_block_write(L1BlockFieldTag.L1BaseFee)
         # + instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
         # + instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
-        # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
+        # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardScalar)
         instruction.constrain_step_state_transition(
             rw_counter=Transition.delta(8 + 3 * is_first_tx), call_id=Transition.same()
         )

@@ -16,7 +16,7 @@ from ...util import (
 def fee_distribution_hook(instruction: Instruction):
     tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId)
     tx_gas = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Gas)
-    validator_reward_numerator = instruction.l1_block_read(L1BlockFieldTag.ValidatorRewardNumerator)
+    validator_reward_scalar = instruction.l1_block_read(L1BlockFieldTag.ValidatorRewardScalar)
     zero = instruction.rlc_encode(0, N_BYTES_WORD)
     """
     NOTE(TA): You might think that we should have a constraint as implemented in the zkevm-circuits code:
@@ -32,9 +32,9 @@ def fee_distribution_hook(instruction: Instruction):
     instruction.constrain_zero(carry)
 
     validator_reward_tmp = instruction.rlc_encode(
-        total_reward.int_value * validator_reward_numerator.int_value, N_BYTES_WORD
+        total_reward.int_value * validator_reward_scalar.int_value, N_BYTES_WORD
     )
-    instruction.mul_add_words(total_reward, validator_reward_numerator, zero, validator_reward_tmp)
+    instruction.mul_add_words(total_reward, validator_reward_scalar, zero, validator_reward_tmp)
 
     validator_reward, _ = divmod(validator_reward_tmp.int_value, VALIDATOR_REWARD_DENOMINATOR)
     validator_reward_rlc = instruction.rlc_encode(validator_reward, N_BYTES_WORD)

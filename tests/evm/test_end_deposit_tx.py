@@ -20,7 +20,7 @@ from zkevm_specs.util import (
     L1_BASE_FEE,
     L1_FEE_OVERHEAD,
     L1_FEE_SCALAR,
-    VALIDATOR_REWARD_NUMERATOR,
+    VALIDATOR_REWARD_SCALAR,
     RLC,
 )
 
@@ -35,7 +35,7 @@ TESTING_DATA = (
         False,
         0,
         True,
-        (L1_BASE_FEE, L1_FEE_OVERHEAD, L1_FEE_SCALAR, VALIDATOR_REWARD_NUMERATOR),
+        (L1_BASE_FEE, L1_FEE_OVERHEAD, L1_FEE_SCALAR, VALIDATOR_REWARD_SCALAR),
     ),
     # Not a deposit transaction
     (
@@ -151,14 +151,14 @@ def test_end_deposit_tx(
         )
 
     if is_first_tx:
-        l1_base_fee, l1_fee_overhead, l1_fee_scalar, validator_reward_numerator = l1_fee_data
+        l1_base_fee, l1_fee_overhead, l1_fee_scalar, validator_reward_scalar = l1_fee_data
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1BaseFee, RLC(l1_base_fee, randomness))
         rw_dictionary.l1_block_write(
             L1BlockFieldTag.L1FeeOverhead, RLC(l1_fee_overhead, randomness)
         )
         rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeScalar, RLC(l1_fee_scalar, randomness))
         rw_dictionary.l1_block_write(
-            L1BlockFieldTag.ValidatorRewardNumerator, RLC(validator_reward_numerator, randomness)
+            L1BlockFieldTag.ValidatorRewardScalar, RLC(validator_reward_scalar, randomness)
         )
 
     if not is_last_tx:
