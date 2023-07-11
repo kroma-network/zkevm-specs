@@ -9,7 +9,6 @@ from ...util import (
     N_BYTES_WORD,
     L1_COST_DENOMINATOR,
     PROPOSER_REWARD_VAULT,
-    VALIDATOR_REWARD_DENOMINATOR,
 )
 
 
