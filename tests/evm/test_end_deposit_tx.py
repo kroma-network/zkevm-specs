@@ -6,7 +6,6 @@ from zkevm_specs.evm_circuit import (
     Block,
     CallContextFieldTag,
     ExecutionState,
-    L1BlockFieldTag,
     RWDictionary,
     StepState,
     Tables,
@@ -20,7 +19,7 @@ from zkevm_specs.util import (
     L1_BASE_FEE,
     L1_FEE_OVERHEAD,
     L1_FEE_SCALAR,
-    VALIDATOR_REWARD_NUMERATOR,
+    VALIDATOR_REWARD_SCALAR,
     RLC,
 )
 
@@ -35,7 +34,7 @@ TESTING_DATA = (
         False,
         0,
         True,
-        (L1_BASE_FEE, L1_FEE_OVERHEAD, L1_FEE_SCALAR, VALIDATOR_REWARD_NUMERATOR),
+        (L1_BASE_FEE, L1_FEE_OVERHEAD, L1_FEE_SCALAR, VALIDATOR_REWARD_SCALAR),
     ),
     # Not a deposit transaction
     (
@@ -150,19 +149,8 @@ def test_end_deposit_tx(
             tx.gas + current_cumulative_gas_used,
         )
 
-    if is_first_tx:
-        l1_base_fee, l1_fee_overhead, l1_fee_scalar, validator_reward_numerator = l1_fee_data
-        rw_dictionary.l1_block_write(L1BlockFieldTag.L1BaseFee, RLC(l1_base_fee, randomness))
-        rw_dictionary.l1_block_write(
-            L1BlockFieldTag.L1FeeOverhead, RLC(l1_fee_overhead, randomness)
-        )
-        rw_dictionary.l1_block_write(L1BlockFieldTag.L1FeeScalar, RLC(l1_fee_scalar, randomness))
-        rw_dictionary.l1_block_write(
-            L1BlockFieldTag.ValidatorRewardNumerator, RLC(validator_reward_numerator, randomness)
-        )
-
     if not is_last_tx:
-        rw_dictionary.call_context_read(26 + 3 * is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
+        rw_dictionary.call_context_read(26 - 1 * is_first_tx, CallContextFieldTag.TxId, tx.id + 1)
 
     tables = Tables(
         block_table=set(block.table_assignments(randomness)),
@@ -189,7 +177,7 @@ def test_end_deposit_tx(
             ),
             StepState(
                 execution_state=ExecutionState.EndBlock if is_last_tx else ExecutionState.BeginTx,
-                rw_counter=26 + 3 * is_first_tx - is_last_tx,
+                rw_counter=26 - 1 * is_first_tx - is_last_tx,
                 call_id=1 if is_last_tx else 0,
             ),
         ],

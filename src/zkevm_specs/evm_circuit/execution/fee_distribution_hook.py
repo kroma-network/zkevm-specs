@@ -2,13 +2,14 @@ from ..instruction import Instruction, Transition
 from ..table import (
     CallContextFieldTag,
     TxContextFieldTag,
-    L1BlockFieldTag,
 )
 from ...util import (
     FQ,
+    RLC,
     N_BYTES_WORD,
     PROTOCOL_VAULT,
     VALIDATOR_REWARD_VAULT,
+    VALIDATOR_REWARD_SCALAR,
     VALIDATOR_REWARD_DENOMINATOR,
 )
 
@@ -16,7 +17,6 @@ from ...util import (
 def fee_distribution_hook(instruction: Instruction):
     tx_id = instruction.call_context_lookup(CallContextFieldTag.TxId)
     tx_gas = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Gas)
-    validator_reward_numerator = instruction.l1_block_read(L1BlockFieldTag.ValidatorRewardNumerator)
     zero = instruction.rlc_encode(0, N_BYTES_WORD)
     """
     NOTE(TA): You might think that we should have a constraint as implemented in the zkevm-circuits code:
@@ -32,9 +32,11 @@ def fee_distribution_hook(instruction: Instruction):
     instruction.constrain_zero(carry)
 
     validator_reward_tmp = instruction.rlc_encode(
-        total_reward.int_value * validator_reward_numerator.int_value, N_BYTES_WORD
+        total_reward.int_value * VALIDATOR_REWARD_SCALAR, N_BYTES_WORD
     )
-    instruction.mul_add_words(total_reward, validator_reward_numerator, zero, validator_reward_tmp)
+    instruction.mul_add_words(
+        total_reward, RLC(VALIDATOR_REWARD_SCALAR), zero, validator_reward_tmp
+    )
 
     validator_reward, _ = divmod(validator_reward_tmp.int_value, VALIDATOR_REWARD_DENOMINATOR)
     validator_reward_rlc = instruction.rlc_encode(validator_reward, N_BYTES_WORD)
@@ -42,4 +44,4 @@ def fee_distribution_hook(instruction: Instruction):
 
     instruction.add_balance(FQ(PROTOCOL_VAULT), [protocol_margin_rlc])
     instruction.add_balance(FQ(VALIDATOR_REWARD_VAULT), [validator_reward_rlc])
-    instruction.constrain_step_state_transition(rw_counter=Transition.delta(4))
+    instruction.constrain_step_state_transition(rw_counter=Transition.delta(3))

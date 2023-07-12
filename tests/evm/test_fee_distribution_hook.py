@@ -6,7 +6,6 @@ from zkevm_specs.evm_circuit import (
     Block,
     CallContextFieldTag,
     ExecutionState,
-    L1BlockFieldTag,
     RWDictionary,
     StepState,
     Tables,
@@ -18,7 +17,7 @@ from zkevm_specs.util import (
     PROTOCOL_VAULT,
     VALIDATOR_REWARD_VAULT,
     L1_BASE_FEE,
-    VALIDATOR_REWARD_NUMERATOR,
+    VALIDATOR_REWARD_SCALAR,
     VALIDATOR_REWARD_DENOMINATOR,
     RLC,
 )
@@ -71,7 +70,7 @@ def test_fee_distribution_hook(
     total_reward = tx.gas_price * gas_used if not wrong_fee_amount else 10
     zero_rlc = RLC(0, randomness)
 
-    validator_reward = total_reward * VALIDATOR_REWARD_NUMERATOR // VALIDATOR_REWARD_DENOMINATOR
+    validator_reward = total_reward * VALIDATOR_REWARD_SCALAR // VALIDATOR_REWARD_DENOMINATOR
     protocol_margin = total_reward - validator_reward
     validator_reward = RLC(validator_reward, randomness)
     protocol_margin = RLC(protocol_margin, randomness)
@@ -80,7 +79,6 @@ def test_fee_distribution_hook(
         # fmt: off
         RWDictionary(17)
             .call_context_read(1, CallContextFieldTag.TxId, tx.id)
-            .l1_block_read(L1BlockFieldTag.ValidatorRewardNumerator, RLC(VALIDATOR_REWARD_NUMERATOR, randomness))
             .account_write(PROTOCOL_VAULT, AccountFieldTag.Balance, protocol_margin, zero_rlc)
             .account_write(VALIDATOR_REWARD_VAULT, AccountFieldTag.Balance, validator_reward, zero_rlc)
         # fmt: on
@@ -113,7 +111,7 @@ def test_fee_distribution_hook(
                 execution_state=ExecutionState.ProposerRewardHook
                 if not wrong_step
                 else ExecutionState.EndTx,
-                rw_counter=21,
+                rw_counter=20,
                 call_id=1,
             ),
         ],

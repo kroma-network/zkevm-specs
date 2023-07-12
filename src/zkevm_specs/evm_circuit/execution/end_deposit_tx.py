@@ -1,7 +1,7 @@
 from ...util import FQ, N_BYTES_GAS, MAX_REFUND_QUOTIENT_OF_GAS_USED, DEPOSIT_TX_TYPE
 from ..execution_state import ExecutionState
 from ..instruction import Instruction, Transition
-from ..table import L1BlockFieldTag, CallContextFieldTag, TxContextFieldTag, TxReceiptFieldTag
+from ..table import CallContextFieldTag, TxContextFieldTag, TxReceiptFieldTag
 
 
 def end_deposit_tx(instruction: Instruction):
@@ -56,12 +56,6 @@ def end_deposit_tx(instruction: Instruction):
         instruction.tx_receipt_write(tx_id, TxReceiptFieldTag.CumulativeGasUsed),
     )
 
-    if is_first_tx:
-        instruction.l1_block_write(L1BlockFieldTag.L1BaseFee)
-        instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
-        instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
-        instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
-
     # When to next transaction
     if instruction.next.execution_state == ExecutionState.BeginTx:
         # Check next tx_id is increased by 1
@@ -74,12 +68,8 @@ def end_deposit_tx(instruction: Instruction):
         # Do step state transition for rw_counter
         # NOTE(chokobole): Compared to end_tx, the rwc is different as follows.
         # - instruction.add_balance(coinbase, [reward])
-        # + instruction.l1_block_write(L1BlockFieldTag.L1BaseFee)
-        # + instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
-        # + instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
-        # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
         instruction.constrain_step_state_transition(
-            rw_counter=Transition.delta(9 + 3 * is_first_tx)
+            rw_counter=Transition.delta(9 - 1 * is_first_tx)
         )
 
     # When to end of block
@@ -87,10 +77,6 @@ def end_deposit_tx(instruction: Instruction):
         # Do step state transition for rw_counter and call_id
         # NOTE(chokobole): Compared to end_tx, the rwc is different as follows.
         # - instruction.add_balance(coinbase, [reward])
-        # + instruction.l1_block_write(L1BlockFieldTag.L1BaseFee)
-        # + instruction.l1_block_write(L1BlockFieldTag.L1FeeOverhead)
-        # + instruction.l1_block_write(L1BlockFieldTag.L1FeeScalar)
-        # + instruction.l1_block_write(L1BlockFieldTag.ValidatorRewardNumerator)
         instruction.constrain_step_state_transition(
-            rw_counter=Transition.delta(8 + 3 * is_first_tx), call_id=Transition.same()
+            rw_counter=Transition.delta(8 - 1 * is_first_tx), call_id=Transition.same()
         )

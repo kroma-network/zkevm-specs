@@ -55,7 +55,6 @@ from .table import (
     CopyCircuitRow,
     KeccakTableRow,
     ExpCircuitRow,
-    L1BlockFieldTag,
 )
 from .opcode import get_push_size, Opcode
 
@@ -196,7 +195,7 @@ class Transaction:
         batcher_hash: U256 = U256(0),
         l1_fee_overhead: U256 = U256(2100),
         l1_fee_scalar: U256 = U256(1000000),
-        reward_ratio: U256 = U256(1000),
+        reward_scalar: U256 = U256(1000),
     ) -> Transaction:
         call_data = (
             bytes.fromhex("efc674eb")
@@ -208,7 +207,7 @@ class Transaction:
             + batcher_hash.to_bytes(32, "big")
             + l1_fee_overhead.to_bytes(32, "big")
             + l1_fee_scalar.to_bytes(32, "big")
-            + reward_ratio.to_bytes(32, "big")
+            + reward_scalar.to_bytes(32, "big")
         )
         tx = obj(
             # id
@@ -726,34 +725,6 @@ class RWDictionary:
     def tx_refund_read(self, tx_id: IntOrFQ, refund: IntOrFQ) -> RWDictionary:
         return self._append(
             RW.Read, RWTableTag.TxRefund, key1=FQ(tx_id), value=FQ(refund), value_prev=FQ(refund)
-        )
-
-    def l1_block_write(
-        self,
-        field_tag: L1BlockFieldTag,
-        value: Union[int, FQ, RLC],
-    ) -> RWDictionary:
-        if isinstance(value, int):
-            value = FQ(value)
-        return self._append(
-            RW.Write,
-            RWTableTag.L1Block,
-            key3=FQ(field_tag),
-            value=value,
-        )
-
-    def l1_block_read(
-        self,
-        field_tag: L1BlockFieldTag,
-        value: Union[int, FQ, RLC],
-    ) -> RWDictionary:
-        if isinstance(value, int):
-            value = FQ(value)
-        return self._append(
-            RW.Read,
-            RWTableTag.L1Block,
-            key3=FQ(field_tag),
-            value=value,
         )
 
     def tx_refund_write(
