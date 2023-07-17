@@ -26,4 +26,4 @@ make test
 
 ## Implementations
 
-See [privacy-scaling-explorations/zkevm-circuits](https://github.com/privacy-scaling-explorations/zkevm-circuits)
+See [kroma-network/zkevm-circuits](https://github.com/kroma-network/zkevm-circuits)
