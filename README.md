@@ -1,4 +1,4 @@
-# Zkevm Specifications
+# zkEVM Specifications
 
 [![Python package](https://github.com/privacy-scaling-explorations/zkevm-specs/actions/workflows/python-package.yml/badge.svg)](https://github.com/privacy-scaling-explorations/zkevm-specs/actions/workflows/python-package.yml)
 
